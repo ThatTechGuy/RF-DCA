@@ -1,57 +1,39 @@
-<!DOCTYPE html>
-<!--[if IE 9 ]><html class="ie9"><![endif]-->
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-        <meta charset="UTF-8">
+{% extends "layout.html" %}
 
-        <title>RiskFactor</title>
-
-        <link href={{ url_for('static', filename='vendors/bower_components/animate.css/animate.min.css') }} rel="stylesheet">
-        <link href={{ url_for('static', filename='vendors/bower_components/material-design-iconic-font/dist/css/material-design-iconic-font.min.css') }} rel="stylesheet">
-
-        <link href={{ url_for('static', filename='css/app.min.css') }} rel="stylesheet">
-    </head>
-
-    <body class="login-content">
-        <!-- Login -->
-        <form action="{{ url_for('login') }}" method="POST" class="lc-block toggled" id="l-login">
-            <div class="lcb-float"><i class="zmdi zmdi-pin-account"></i></div>
-
-            <div class="form-group">
-                {{ form.email(placeholder='Email', class_='form-control') }}
+{% block body %}
+{% with errors = get_flashed_messages(category_filter=["error"]) %}
+{%- for msg in errors %}
+<li>{{ msg }}</li>
+{% endfor -%}
+{% endwith %}
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 col-md-offset-4">
+          <div class="login-panel panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">RiskFactor DCA</h3>
             </div>
-
-            <div class="form-group">
-                {{ form.password(placeholder='Password', class_='form-control') }}
-            </div>
-
-            {{ form.csrf_token }}
-
-            <div class="clearfix"></div>
-
-            <div class="p-relative ">
-                <div class="checkbox cr-alt">
-                    <label class="c-gray">
-                        <input type="checkbox" value="">
-                        <i class="input-helper"></i>
-                        Keep me signed in
+            <div class="panel-body">
+              <form action="{{ url_for('login') }}" method="POST">
+                <fieldset>
+                  <div class="form-group">
+                    {{ form.email(class_='form-control', placeholder='Email', autofocus='autofocus') }}
+                  </div>
+                  <div class="form-group">
+                    {{ form.password(class_='form-control', placeholder='Password') }}
+                  </div>
+                  <div class="checkbox">
+                    <label>
+                      {{ form.remember }} {{ form.remember.label }}
                     </label>
-                </div>
-
+                    {{ form.csrf_token }}
+                  </div>
+                  <button type="submit" class="btn btn-lg btn-success btn-block">Login</a>
+                </fieldset>
+              </form>
             </div>
-
-            <button type="submit" class="btn btn-block btn-primary btn-float m-t-25">Sign In</button>
-        </form>
-
-        <!-- Javascript Libraries -->
-        <script src={{ url_for('static', filename='vendors/bower_components/jquery/dist/jquery.min.js') }}></script>
-        <script src={{ url_for('static', filename='vendors/bower_components/bootstrap/dist/js/bootstrap.min.js') }}></script>
-
-        <!-- Placeholder for IE9 -->
-        <!--[if IE 9 ]>
-            <script src={{ url_for('static', filename='vendors/bower_components/jquery-placeholder/jquery.placeholder.min.js') }}></script>
-        <![endif]-->
-
-        <script src={{ url_for('static', filename='js/functions.js') }}></script>
-    </body>
-</html>
+          </div>
+        </div>
+      </div>
+    </div>
+{% endblock %}

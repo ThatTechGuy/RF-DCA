@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for
+from flask import flash, render_template, redirect, url_for
 from flask.ext.login import login_user, login_required
 
 from . import app
@@ -14,10 +14,12 @@ def dashboard():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = Employee.query.filter_by(email=form.email.data).first_or_404()
-        if user.is_valid_pass(form.password.data):
-            login_user(user)
+        user = Employee.query.filter_by(email=form.email.data).first()
+        if user and user.is_valid_pass(form.password.data):
+            remember = form.remember.data == 'y'
+            login_user(user, remember=remember)
             return redirect(url_for('dashboard'))
         else:
+            flash(u'Incorrect Username or Password!', 'error')
             return redirect(url_for('login'))
     return render_template('login.html', form=form)
