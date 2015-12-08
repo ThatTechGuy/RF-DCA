@@ -1,11 +1,15 @@
-{% macro flash_disp(flash_type, flash_context) %}
+{% macro flash_disp(flash_category, alert_context, glyphicon=None) %}
 {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if category == flash_type %}
-    {% for message in messages %}
-    <div class="alert alert-{{ flash_context }}" role="alert">
-	  {{ message }}
-	</div>
-	{% endfor %}
-  {% endif %}
+  {% for category, message in messages %}
+    {% if category == flash_category %}
+    <div class="alert alert-{{ alert_context }}" role="alert">
+      {% if glyphicon %}
+      <span class="glyphicon glyphicon-{{ glyphicon }}" aria-hidden="true"></span>
+      {% endif %}
+      <span class="sr-only">{{ category }}</span>
+      {{ message }}
+    </div>
+    {% endif %}
+  {% endfor %}
 {% endwith %}
 {% endmacro %}
