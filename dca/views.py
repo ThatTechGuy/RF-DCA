@@ -1,4 +1,4 @@
-from flask import flash, render_template, redirect, url_for
+from flask import flash, render_template, redirect, request, url_for
 from flask.ext.login import login_user, login_required, logout_user
 
 from . import app
@@ -18,7 +18,8 @@ def login():
         if user and user.is_valid_pass(form.password.data):
             remember = form.remember.data == 'y'
             login_user(user, remember=remember)
-            return redirect(url_for('dashboard'))
+            next = request.args.get('next')
+            return redirect(next or url_for('dashboard'))
         else:
             flash(u'Incorrect Username or Password!', 'error')
             return redirect(url_for('login'))
