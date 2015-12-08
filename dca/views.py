@@ -20,6 +20,6 @@ def login():
             login_user(user, remember=remember)
             return redirect(url_for('dashboard'))
         else:
-            flash(u'Incorrect Username or Password!', 'error')
+            flash('Incorrect Username or Password!', category='error')
             return redirect(url_for('login'))
     return render_template('login.html', form=form)
