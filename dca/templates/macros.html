@@ -1,0 +1,11 @@
+{% macro flash_disp(flash_type, flash_context) %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if category == flash_type %}
+    {% for message in messages %}
+    <div class="alert alert-{{ flash_context }}" role="alert">
+	  {{ message }}
+	</div>
+	{% endfor %}
+  {% endif %}
+{% endwith %}
+{% endmacro %}

@@ -1,2 +1,4 @@
 *.pyc
+*.wsgi
 instance/
+venv/
