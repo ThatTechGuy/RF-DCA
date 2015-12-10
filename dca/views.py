@@ -1,5 +1,5 @@
 from flask import flash, render_template, redirect, request, url_for
-from flask.ext.login import login_user, login_required, logout_user
+from flask.ext.login import current_user, login_user, login_required, logout_user
 
 from . import app
 from .forms import LoginForm
@@ -30,4 +30,11 @@ def login():
 def logout():
     logout_user()
     flash(u'You have been logged out, login again.', 'info')
+    return redirect(url_for('login'))
+
+@app.route('/users/<action>')
+@login_required
+def user_admin(action):
+    user = str(current_user.id)
+    flash(u'The User Box Contains ' + user, 'error')
     return redirect(url_for('login'))
