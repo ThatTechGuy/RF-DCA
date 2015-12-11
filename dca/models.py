@@ -4,6 +4,12 @@ from flask.ext.login import UserMixin
 
 from . import bcrypt, db
 
+class Center(db.Model):
+    id = db.Column(MEDIUMINT(8, unsigned=True), primary_key=True,
+                             autoincrement=False)
+    phone = db.Column(VARCHAR(10), nullable=False)
+    location = db.Column(VARCHAR(255), nullable=False)
+
 class Employee(db.Model,UserMixin):
     id = db.Column(MEDIUMINT(8, unsigned=True), primary_key=True,
                    autoincrement=True)
@@ -12,6 +18,8 @@ class Employee(db.Model,UserMixin):
                                     onupdate='RESTRICT',
                                     ondelete='RESTRICT'),
                       nullable=False)
+    position = db.relationship('EmpPosition', backref='employees',
+                               lazy='select')
     email = db.Column(VARCHAR(255), nullable=False)
     _password = db.Column(VARCHAR(60), nullable=False)
     fullName = db.Column(VARCHAR(255), nullable=False)
@@ -32,6 +40,20 @@ class Employee(db.Model,UserMixin):
 class EmpPosition(db.Model):
     id = db.Column(TINYINT(2, unsigned=True), primary_key=True,
                    autoincrement=False)
-    position = db.Column(VARCHAR(255), nullable=False)
-    employees = db.relationship('Employee', backref='emp_position',
-                                lazy='dynamic')
+    title = db.Column(VARCHAR(255), nullable=False)
+    description = db.Column(VARCHAR(255), nullable=False)
+
+class CenterEmployee(db.Model):
+    cenId = db.Column(MEDIUMINT(8, unsigned=True),
+                      db.ForeignKey('center.id',
+                                    onupdate='RESTRICT',
+                                    ondelete='RESTRICT'),
+                      primary_key=True)
+    empId = db.Column(MEDIUMINT(8, unsigned=True),
+                      db.ForeignKey('employee.id',
+                                    onupdate='RESTRICT',
+                                    ondelete='RESTRICT'),
+                      primary_key=True)
+    accId = db.Column(MEDIUMINT(8, unsigned=True), nullable=False)
+    roster = db.Column(TINYINT(1, unsigned=True), nullable=False,
+                       server_default='1')
