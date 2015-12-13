@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% from "macros.html" import flash_disp with context %}
+{% from "macros.html" import show_flash, render_field with context %}
 {% block main %}
   <div class="container">
     <div class="row">
@@ -10,16 +10,14 @@
             <h3 class="panel-title">RiskFactor DCA</h3>
           </div>
           <div class="panel-body">
-            {{ flash_disp('error', 'danger', 'exclamation-sign') }}
-            {{ flash_disp('info', 'info', 'info-sign') }}
+            {{ show_flash('error', 'danger', 'exclamation-sign') }}
+            {% if next != '/' %}
+              {{ show_flash('info', 'info', 'info-sign') }}
+            {% endif %}
             <form method="POST">
               <fieldset>
-                <div class="form-group">
-                  {{ form.email(class_='form-control', placeholder='Email', autofocus='autofocus') }}
-                </div>
-                <div class="form-group">
-                  {{ form.password(class_='form-control', placeholder='Password') }}
-                </div>
+                {{ render_field(form.email, class_='form-control', placeholder='Email', autofocus='autofocus') }}
+                {{ render_field(form.password, class_='form-control', placeholder='Password') }}
                 <div class="checkbox">
                   <label>
                     {{ form.remember }} {{ form.remember.label }}

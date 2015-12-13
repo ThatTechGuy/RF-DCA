@@ -25,6 +25,7 @@ class Employee(db.Model,UserMixin):
     fullName = db.Column(VARCHAR(255), nullable=False)
     admin = db.Column(TINYINT(1, unsigned=True), nullable=False,
                       server_default='0')
+    permissions = db.relationship('CenterEmployee', lazy='dynamic')
 
     @hybrid_property
     def password(self):
@@ -36,6 +37,9 @@ class Employee(db.Model,UserMixin):
 
     def is_valid_pass(self, plaintext):
         return bcrypt.check_password_hash(self._password, plaintext)
+
+    def user_perms_for(self, center):
+        return self.permissions.filter_by(cenId=center).first()
 
 class EmpPosition(db.Model):
     id = db.Column(TINYINT(2, unsigned=True), primary_key=True,

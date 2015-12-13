@@ -1,4 +1,4 @@
-{% macro flash_disp(flash_category, alert_context, glyphicon=None) %}
+{% macro show_flash(flash_category, alert_context, glyphicon=None) %}
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% for category, message in messages %}
     {% if category == flash_category %}
@@ -12,4 +12,17 @@
     {% endif %}
   {% endfor %}
 {% endwith %}
+{% endmacro %}
+
+{% macro render_field(field) %}
+  {% if field.errors %}
+  <div class="form-group has-error">
+    {% for error in field.errors %}
+    <label class="control-label">{{ error }}</label>
+    {% endfor %}
+  {% else %}
+  <div class=form-group>
+  {% endif %}
+    {{ field(**kwargs)|safe }}
+  </div>
 {% endmacro %}

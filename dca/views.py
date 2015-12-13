@@ -13,17 +13,17 @@ def dashboard():
 @app.route('/login', methods=["GET", "POST"])
 def login():
     form = LoginForm()
+    next = request.args.get('next')
     if form.validate_on_submit():
         user = Employee.query.filter_by(email=form.email.data).first()
         if user and user.is_valid_pass(form.password.data):
             remember = form.remember.data == 'y'
             login_user(user, remember=remember)
-            next = request.args.get('next')
             return redirect(next or url_for('dashboard'))
         else:
             flash(u'Incorrect Username or Password!', 'error')
             return redirect(url_for('login'))
-    return render_template('login.html', form=form)
+    return render_template('login.html', form=form, next=next)
 
 @app.route('/logout')
 @login_required
