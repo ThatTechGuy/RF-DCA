@@ -8,6 +8,9 @@
 
     <!-- Bootstrap -->
     <link href={{ url_for('static', filename='vendor/css/bootstrap.min.css') }} rel="stylesheet">
+    <!-- Select2 -->
+    <link href={{ url_for('static', filename='vendor/css/select2.css') }} rel="stylesheet">
+    <link href={{ url_for('static', filename='vendor/css/select2-bootstrap.css') }} rel="stylesheet">
     <!-- MetisMenu  -->
     <link href={{ url_for('static', filename='vendor/css/metisMenu.min.css') }} rel="stylesheet">
     <!-- MorrisCharts -->
@@ -31,7 +34,9 @@
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src={{ url_for('static', filename='vendor/js/jquery.min.js') }}></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src={{ url_for('static', filename='vendor/js//bootstrap.min.js') }}></script>
+    <script src={{ url_for('static', filename='vendor/js/bootstrap.min.js') }}></script>
+    <!-- Select2 Plugin Javascript -->
+    <script src={{ url_for('static', filename='vendor/js/select2.min.js') }}></script>
     <!-- Metis Menu Plugin JavaScript -->
     <script src={{ url_for('static', filename='vendor/js/metisMenu.min.js') }}></script>
     <!-- Morris Charts JavaScript -->
@@ -42,5 +47,8 @@
     <script src={{ url_for('static', filename='vendor/js/dataTables.bootstrap.min.js') }}></script>
     <!-- Custom Theme JavaScript -->
     <script src={{ url_for('static', filename='js/sb-admin-2.js') }}></script>
+    {% block script %}
+
+    {% endblock %}
   </body>
 </html>
