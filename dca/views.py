@@ -3,8 +3,7 @@ from flask.ext.login import current_user, login_user, login_required, logout_use
 
 from . import app
 from .forms import LoginForm
-from .models import Employee
-from .util import mod_perm_req
+from .util import admin_perm_req, mod_perm_req, check_pass, get_perms
 
 @app.route('/', defaults={'center': None})
 @app.route('/center/<center>', endpoint='center')
@@ -21,21 +20,18 @@ def login():
     form = LoginForm()
     next = request.args.get('next')
     if form.validate_on_submit():
-        user = Employee.query.filter_by(email=form.email.data).first()
-        if user and user.is_valid_pass(form.password.data):
-            remember = form.remember.data == 'y'
-            login_user(user, remember=remember)
-            return redirect(next or url_for('dashboard'))
-        else:
-            flash(u'Incorrect Username or Password!', 'error')
-            return redirect(url_for('login'))
+		valid_user = check_pass(form.email.data, form.password.data)
+		if valid_user:
+			remember = form.remember.data == 'y'
+			login_user(valid_user, remember=remember)
+			return redirect(next or url_for('dashboard'))
     return render_template('login.html', form=form, next=next)
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash(u'You have been logged out, login again.', 'info')
+    flash('You have been logged out, login again.', 'info')
     return redirect(url_for('login'))
 
 @app.route('/record/<record>')
@@ -46,7 +42,12 @@ def doc_manage(record):
 @app.route('/manager/<action>')
 @login_required
 def biz_manage(action):
-    pass
+	perms = get_perms()
+	if action == 'new' and get_perm('addBiz'):
+		return render_template('add-biz.html')
+	elif action == 'edit' and get_perm('modBiz'):
+		return render_template('mod-biz.html')
+	return render_template('manager.html', perms=perms)
 
 @app.route('/users/<action>')
 @login_required
@@ -56,6 +57,6 @@ def user_admin(action):
 
 @app.route('/settings')
 @login_required
-#@admin_perm_req
+@admin_perm_req
 def global_settings():
     pass
