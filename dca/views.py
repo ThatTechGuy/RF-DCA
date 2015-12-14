@@ -40,9 +40,9 @@ def logout():
 
 @app.route('/record/<record>')
 @login_required
-def doc_manage
+def doc_manage(record):
     pass
-    
+
 @app.route('/manager/<action>')
 @login_required
 def biz_manage(action):
@@ -56,6 +56,6 @@ def user_admin(action):
 
 @app.route('/settings')
 @login_required
-@admin_perm_req
+#@admin_perm_req
 def global_settings():
     pass
