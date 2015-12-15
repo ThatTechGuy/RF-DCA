@@ -1,10 +1,12 @@
 {% extends "navigation.html" %}
 
+{% from "macros.html" import show_flash, render_field with context %}
 {% block page %}
     <div id="page-wrapper">
       <div class="row">
         <div class="col-lg-12">
           <h1 class="page-header">Dashboard</h1>
+          {{ show_flash('error', 'danger', 'exclamation-sign') }}
         </div>
       </div>
       <div class="row">

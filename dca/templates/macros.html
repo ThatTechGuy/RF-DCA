@@ -3,6 +3,7 @@
   {% for category, message in messages %}
     {% if category == flash_category %}
     <div class="alert alert-{{ alert_context }}" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       {% if glyphicon %}
       <span class="glyphicon glyphicon-{{ glyphicon }}" aria-hidden="true"></span>
       {% endif %}

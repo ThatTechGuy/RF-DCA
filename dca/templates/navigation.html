@@ -34,18 +34,14 @@
                 {% endfor %}
               </select>
             </li>
-            <li>
-              <a href="index.html"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
-            </li>
-            <li>
-              <a href="manager.html"><i class="fa fa-folder fa-fw"></i> Manager</a>
-            </li>
-            <li>
-              <a href="{{ url_for('user_admin', action='new') }}"><i class="fa fa-users fa-fw"></i> Users</a>
-            </li>
-            <li>
-              <a href="forms.html"><i class="fa fa-cogs fa-fw"></i> Settings</a>
-            </li>
+            {% if session['center'] == None %}
+            <li><a href="{{ url_for('dashboard') }}"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a></li>
+            {% else %}
+            <li><a href="{{ url_for('center', center=center) }}"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('biz_manage', action='index') }}"><i class="fa fa-folder fa-fw"></i> Manager</a></li>
+            <li><a href="{{ url_for('user_admin', action='index') }}"><i class="fa fa-users fa-fw"></i> Users</a></li>
+            <li><a href="{{ url_for('global_settings') }}"><i class="fa fa-cogs fa-fw"></i> Settings</a></li>
           </ul>
         </div>
       </div>
@@ -63,10 +59,8 @@
       allowClear: true
     });
 
-    {% if session['center'] is defined %}
-      var center = '{{ session['center'] }}';
-      $('#center-search').select2('val', center);
-    {% endif %}
+    var center = '{{ session['center'] }}';
+    $('#center-search').select2('val', center);
 
     $(document).ready(function() {
       $('#center-search').on('change', function(e) {

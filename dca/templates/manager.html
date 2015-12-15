@@ -1,0 +1,70 @@
+{% extends "navigation.html" %}
+
+{% from "macros.html" import show_flash, render_field with context %}
+{% block page %}
+    <div id="page-wrapper">
+      <div class="row">
+        <div class="col-lg-12">
+          <h1 class="page-header">Business Index</h1>
+          {{ show_flash('error', 'danger', 'exclamation-sign') }}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              Active Business Records
+            </div>
+            <div class="panel-body">
+              <div class="dataTable_wrapper">
+                <table class="table table-striped table-bordered table-hover" id="biz-index">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Business Name</th>
+                      <th>Contact/Owner</th>
+                      <th>Phone Number</th>
+                      <th>View</th>
+                      <th>Edit</th>
+                      <th>Delete</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for biz in bizs %}
+                    <tr>
+                      <td>{{ biz.info.type.name }}</td>
+                      <td>{{ biz.info.name }}</td>
+                      <td>{{ biz.info.contact }}</td>
+                      <td>{{ biz.info.phone }}</td>
+                      <td><a href=""><i class="fa fa-eye fa-large"></i></a></td>
+                      <td><a href=""><i class="fa fa-pencil fa-large"></i></a></td>
+                      <td><a href=""><i class="fa fa-trash fa-large centered"></i></a></td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+  {{ super() }}
+
+  <script>
+    $(document).ready(function() {
+      $('#biz-index').DataTable({
+        "responsive": true,
+        "columnDefs": [{
+          "targets": [-1,-2,-3],
+          "searchable": false,
+          "orderable": false,
+          "className": "text-center"
+        }]
+      });
+    });
+  </script>
+{% endblock %}

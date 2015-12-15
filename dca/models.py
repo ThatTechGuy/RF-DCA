@@ -9,6 +9,7 @@ class Center(db.Model):
                              autoincrement=False)
     phone = db.Column(VARCHAR(10), nullable=False)
     location = db.Column(VARCHAR(255), nullable=False)
+    businesses = db.relationship('CenterBusiness', lazy='dynamic')
 
 class Employee(db.Model,UserMixin):
     id = db.Column(MEDIUMINT(8, unsigned=True), primary_key=True,
@@ -109,3 +110,19 @@ class BizType(db.Model):
                    autoincrement=False)
     name = db.Column(VARCHAR(255), nullable=False)
     description = db.Column(VARCHAR(255), nullable=False)
+
+class CenterBusiness(db.Model):
+    cenId = db.Column(MEDIUMINT(8, unsigned=True),
+                      db.ForeignKey('center.id',
+                                    onupdate='RESTRICT',
+                                    ondelete='RESTRICT'),
+                      primary_key=True)
+    bizId = db.Column(MEDIUMINT(8, unsigned=True),
+                      db.ForeignKey('business.id',
+                                    onupdate='RESTRICT',
+                                    ondelete='RESTRICT'),
+                      primary_key=True)
+    info = db.relationship('Business', backref='centers',
+                               lazy='joined')
+    archived = db.Column(TINYINT(1, unsigned=True), nullable=False,
+                         server_default='0')
