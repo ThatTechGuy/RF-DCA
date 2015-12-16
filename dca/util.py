@@ -2,7 +2,8 @@ from functools import wraps
 from flask import flash, redirect, session, url_for
 from flask.ext.login import current_user
 
-from .models import Center, Employee
+from . import db
+from .models import Business, Center, Employee
 
 def admin_perm_req(func):
     @wraps(func)
@@ -49,3 +50,10 @@ def get_biz_info(business, archived=0):
     if business == 'all':
         return center.businesses.filter_by(archived=archived).all()
     return center.businesses.filter_by(bizId=business).first()
+
+def store_biz_info(form):
+    business = Business.query.filter_by(id=form.biz_id.data).first()
+    business.name = form.name.data
+    business.contact = form.contact.data
+    business.phone = form.phone.data
+    db.session.commit()

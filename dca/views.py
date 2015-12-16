@@ -1,9 +1,10 @@
 from flask import abort, flash, render_template, redirect, request, url_for, session
-from flask.ext.login import current_user, login_user, login_required, logout_user
+from flask.ext.login import current_user, login_required, login_user, logout_user
 
 from . import app
-from .forms import LoginForm
-from .util import *
+from .forms import BusinessForm, LoginForm
+from .util import admin_perm_req, center_required, check_pass, get_biz_info, \
+    mod_perm_req, store_biz_info
 
 @app.route('/', defaults={'center': None})
 @app.route('/center/<center>', endpoint='center')
@@ -36,33 +37,51 @@ def logout():
     flash('You have been logged out, login again.', 'info')
     return redirect(url_for('login'))
 
+@app.route('/profile')
+@login_required
+def my_profile():
+    pass
+
+@app.route('/manager')
+@login_required
+@center_required
+def biz_manage():
+    form = BusinessForm()
+    center = session['center']
+    if form.validate_on_submit():
+        store_biz_info(form)
+        flash('Record has been successfully updated.', 'info')
+        return redirect(url_for('biz_manage'))
+    active_biz_list = get_biz_info('all')
+    centers, = zip(*current_user.centers_list())
+    perms = current_user.user_perms_for(session['center'])
+    return render_template('manager.html', biz_list=active_biz_list,
+                           center=center, centers=centers, form=form,
+                           perms=perms)
+
+@app.route('/_edit_biz', methods=["POST"])
+@login_required
+@center_required
+def edit_biz():
+    bizId = request.form['id']
+    biz = get_biz_info(bizId)
+    business = [{
+        'name': biz.info.name,
+        'contact': biz.info.contact,
+        'phone': biz.info.contact
+    }]
+    return json.dumps(business)
+
 @app.route('/record/<record>')
 @login_required
+@center_required
 def doc_manage(record):
     pass
 
-@app.route('/manager/<action>')
-@login_required
-@center_required
-def biz_manage(action):
-    center = session['center']
-    centers, = zip(*current_user.centers_list())
-    perms = current_user.user_perms_for(session['center'])
-    if action == 'index':
-        bizs = get_biz_info('all')
-        return render_template('manager.html', bizs=bizs,
-                               center=center, centers=centers)
-    elif action == 'new' and perms.access.addBiz:
-        return render_template('new_biz.html')
-    elif action == 'edit' and perms.access.modBiz:
-        return render_template('edit_biz.html')
-    else:
-        abort(404)
-
-@app.route('/users/<action>')
+@app.route('/users')
 @login_required
 @mod_perm_req
-def user_admin(action):
+def user_admin():
     pass
 
 @app.route('/settings')

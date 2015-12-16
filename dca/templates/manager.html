@@ -6,7 +6,8 @@
       <div class="row">
         <div class="col-lg-12">
           {{ show_flash('error', 'danger', 'exclamation-sign') }}
-          <h1 class="page-header">Business Index</h1>
+          {{ show_flash('info', 'info', 'info-sign') }}
+          <h1 class="page-header">Business Records</h1>
         </div>
       </div>
       <div class="row">
@@ -30,20 +31,59 @@
                     </tr>
                   </thead>
                   <tbody>
-                    {% for biz in bizs %}
+                    {% for biz in biz_list %}
                     <tr>
                       <td>{{ biz.info.type.name }}</td>
                       <td>{{ biz.info.name }}</td>
                       <td>{{ biz.info.contact }}</td>
                       <td>{{ biz.info.phone }}</td>
-                      <td><a href=""><i class="fa fa-eye fa-large"></i></a></td>
-                      <td><a href=""><i class="fa fa-pencil fa-large"></i></a></td>
-                      <td><a href=""><i class="fa fa-trash fa-large centered"></i></a></td>
+                      <td>
+                        <button class="btn btn-info btn-xs">
+                          <i class="fa fa-eye fa-large"></i>
+                        </button>
+                      </td>
+                      <td>
+                        <button class="btn btn-warning btn-xs" id="editBiz" data-id="{{ biz.info.id }}">
+                          <i class="fa fa-pencil fa-large"></i>
+                        </button>
+                      </td>
+                      <td>
+                        <button class="btn btn-danger btn-xs" id="deleteBiz" data-toggle="modal" data-target="#deleteModal">
+                          <i class="fa fa-trash fa-large centered"></i>
+                        </button>
+                      </td>
                     </tr>
                     {% endfor %}
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="editModalLabel">Modify Business Record</h4>
+            </div>
+            <div class="modal-body">
+              <form id="editBizForm" method="POST">
+                {{ form.biz_id(value='') }}
+                <fieldset>
+                  {{ form.name.label }}: {{ render_field(form.name, class_='form-control', autofocus='autofocus') }}
+                </fieldset>
+                <fieldset>
+                  {{ form.contact.label }}: {{ render_field(form.contact, class_='form-control') }}
+                  {{ form.phone.label }}: {{ render_field(form.phone, class_='form-control') }}
+                </fieldset>
+                {{ form.csrf_token }}
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="submit" form="editBizForm" class="btn btn-primary">Save changes</button>
             </div>
           </div>
         </div>
@@ -55,7 +95,7 @@
   {{ super() }}
 
   <script>
-    $(document).ready(function() {
+    $(function() {
       $('#biz-index').DataTable({
         "responsive": true,
         "columnDefs": [{
@@ -64,6 +104,26 @@
           "orderable": false,
           "className": "text-center"
         }]
+      });
+
+      $('#editBiz').on('click', function(e){
+        $.ajax({
+          url: '{{ url_for('edit_biz') }}',
+          data: {
+            id: $(e).attr('data-id')
+          },
+          type: 'POST',
+          success: function(res) {
+            var data = JSON.parse(res);
+            $('#editBizForm > input[name="name"]').val(data[0]['name']);
+            $('#editBizForm > input[name="contact"]').val(data[0]['contact']);
+            $('#editBizForm > input[name="phone"]').val(data[0]['phone']);
+            $('#editModal').modal();
+          },
+          error: function(error) {
+            console.log(error);
+          }
+        });
       });
     });
   </script>
