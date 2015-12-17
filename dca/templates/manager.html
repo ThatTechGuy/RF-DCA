@@ -43,12 +43,12 @@
                         </button>
                       </td>
                       <td>
-                        <button class="btn btn-warning btn-xs" id="editBiz" data-id="{{ biz.info.id }}">
+                        <button class="btn btn-warning btn-xs" name="editBiz" data-id="{{ biz.info.id }}">
                           <i class="fa fa-pencil fa-large"></i>
                         </button>
                       </td>
                       <td>
-                        <button class="btn btn-danger btn-xs" id="deleteBiz" data-toggle="modal" data-target="#deleteModal">
+                        <button class="btn btn-danger btn-xs"  name="deleteBiz" data-id="{{ biz.info.id }}">
                           <i class="fa fa-trash fa-large centered"></i>
                         </button>
                       </td>
@@ -70,7 +70,7 @@
             </div>
             <div class="modal-body">
               <form id="editBizForm" method="POST">
-                {{ form.biz_id(value='') }}
+                {{ form.id(value='') }}
                 <fieldset>
                   {{ form.name.label }}: {{ render_field(form.name, class_='form-control', autofocus='autofocus') }}
                 </fieldset>
@@ -106,18 +106,18 @@
         }]
       });
 
-      $('#editBiz').on('click', function(e){
+      $('button[name="editBiz"]').on('click', function(){
         $.ajax({
           url: '{{ url_for('edit_biz') }}',
           data: {
-            id: $(e).attr('data-id')
+            id: $(this).attr('data-id')
           },
           type: 'POST',
-          success: function(res) {
-            var data = JSON.parse(res);
-            $('#editBizForm > input[name="name"]').val(data[0]['name']);
-            $('#editBizForm > input[name="contact"]').val(data[0]['contact']);
-            $('#editBizForm > input[name="phone"]').val(data[0]['phone']);
+          success: function(data) {
+            $('#id').val(data.id);
+            $('#name').val(data.name);
+            $('#contact').val(data.contact);
+            $('#phone').val(data.phone);
             $('#editModal').modal();
           },
           error: function(error) {

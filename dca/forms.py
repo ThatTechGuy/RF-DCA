@@ -8,7 +8,7 @@ class LoginForm(Form):
     remember = BooleanField('Remember Me')
 
 class BusinessForm(Form):
-    biz_id = HiddenField('Record ID', validators=[Required()])
+    id = HiddenField('Record ID', validators=[Required()])
     name = TextField('Business Name', validators=[Required()])
     contact = TextField('Contact Name', validators=[Required()])
     phone = TextField('Phone Number', validators=[Required()])

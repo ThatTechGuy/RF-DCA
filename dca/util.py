@@ -52,7 +52,7 @@ def get_biz_info(business, archived=0):
     return center.businesses.filter_by(bizId=business).first()
 
 def store_biz_info(form):
-    business = Business.query.filter_by(id=form.biz_id.data).first()
+    business = Business.query.filter_by(id=form.id.data).first()
     business.name = form.name.data
     business.contact = form.contact.data
     business.phone = form.phone.data

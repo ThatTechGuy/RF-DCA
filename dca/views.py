@@ -1,4 +1,5 @@
-from flask import abort, flash, render_template, redirect, request, url_for, session
+from flask import abort, flash, jsonify, render_template, redirect, request, \
+    url_for, session
 from flask.ext.login import current_user, login_required, login_user, logout_user
 
 from . import app
@@ -37,12 +38,12 @@ def logout():
     flash('You have been logged out, login again.', 'info')
     return redirect(url_for('login'))
 
-@app.route('/profile')
+@app.route('/profile', methods=["GET", "POST"])
 @login_required
 def my_profile():
     pass
 
-@app.route('/manager')
+@app.route('/manager', methods=["GET", "POST"])
 @login_required
 @center_required
 def biz_manage():
@@ -65,26 +66,28 @@ def biz_manage():
 def edit_biz():
     bizId = request.form['id']
     biz = get_biz_info(bizId)
-    business = [{
+    business = {
+        'id': biz.info.id,
+        'type': biz.info.type.id,
         'name': biz.info.name,
         'contact': biz.info.contact,
-        'phone': biz.info.contact
-    }]
-    return json.dumps(business)
+        'phone': biz.info.phone
+    }
+    return jsonify(business)
 
-@app.route('/record/<record>')
+@app.route('/record/<record>', methods=["GET", "POST"])
 @login_required
 @center_required
 def doc_manage(record):
     pass
 
-@app.route('/users')
+@app.route('/users', methods=["GET", "POST"])
 @login_required
 @mod_perm_req
 def user_admin():
     pass
 
-@app.route('/settings')
+@app.route('/settings', methods=["GET", "POST"])
 @login_required
 @admin_perm_req
 def global_settings():
