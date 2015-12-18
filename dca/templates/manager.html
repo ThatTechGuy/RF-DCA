@@ -31,7 +31,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    {% for biz in biz_list %}
+                    {% for biz in data.biz_list %}
                     <tr>
                       <td>{{ biz.info.type.name }}</td>
                       <td>{{ biz.info.name }}</td>
@@ -69,14 +69,15 @@
               <h4 class="modal-title" id="editModalLabel">Modify Business Record</h4>
             </div>
             <div class="modal-body">
-              <form id="editBizForm" method="POST">
+              <form id="editBizForm" class="form-horizontal" method="POST">
                 {{ form.id(value='') }}
                 <fieldset>
-                  {{ form.name.label }}: {{ render_field(form.name, class_='form-control', autofocus='autofocus') }}
+                  {{ render_field(form.name, form.name.label, autofocus='autofocus') }}
+                  {{ render_field(form.type, form.type.label) }}
                 </fieldset>
                 <fieldset>
-                  {{ form.contact.label }}: {{ render_field(form.contact, class_='form-control') }}
-                  {{ form.phone.label }}: {{ render_field(form.phone, class_='form-control') }}
+                  {{ render_field(form.contact, form.contact.label) }}
+                  {{ render_field(form.phone, form.contact.label) }}
                 </fieldset>
                 {{ form.csrf_token }}
               </form>
@@ -116,6 +117,7 @@
           success: function(data) {
             $('#id').val(data.id);
             $('#name').val(data.name);
+            $('#type').val(data.type);
             $('#contact').val(data.contact);
             $('#phone').val(data.phone);
             $('#editModal').modal();
@@ -125,6 +127,12 @@
           }
         });
       });
+
+      var error = {{ (form.errors|length == 0)|lower }};
+      if (!error){
+        $('#editModal').modal('show');
+      }
+
     });
   </script>
 {% endblock %}

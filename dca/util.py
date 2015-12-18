@@ -45,15 +45,23 @@ def check_pass(email, password):
         return False
     return user
 
+def get_user_data():
+    data = {'center': session['center']}
+    data['centers'], = zip(*current_user.centers_list())
+    data['perms'] = current_user.user_perms_for(session['center'])
+    return data
+
 def get_biz_info(business, archived=0):
-    center = Center.query.filter_by(id=session['center']).first()
+    center = Center.query.get(session['center'])
     if business == 'all':
         return center.businesses.filter_by(archived=archived).all()
     return center.businesses.filter_by(bizId=business).first()
 
 def store_biz_info(form):
-    business = Business.query.filter_by(id=form.id.data).first()
+    business = Business.query.get(form.id.data)
     business.name = form.name.data
+    business.typId = form.type.data
     business.contact = form.contact.data
     business.phone = form.phone.data
     db.session.commit()
+    return business.id

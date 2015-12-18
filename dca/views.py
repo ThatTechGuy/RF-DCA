@@ -4,8 +4,9 @@ from flask.ext.login import current_user, login_required, login_user, logout_use
 
 from . import app
 from .forms import BusinessForm, LoginForm
+from .models import BizType
 from .util import admin_perm_req, center_required, check_pass, get_biz_info, \
-    mod_perm_req, store_biz_info
+    get_user_data, mod_perm_req, store_biz_info
 
 @app.route('/', defaults={'center': None})
 @app.route('/center/<center>', endpoint='center')
@@ -13,11 +14,12 @@ from .util import admin_perm_req, center_required, check_pass, get_biz_info, \
 def dashboard(center):
     session['center'] = center
     if not center: center = ''
-    centers, = zip(*current_user.centers_list())
-    if center and int(center) not in centers:
+    data = {'center': center}
+    data['centers'], = zip(*current_user.centers_list())
+    if center and int(center) not in data['centers']:
         flash('You Do Not Have Permission to Access This Center!', 'error')
         return redirect(url_for('dashboard'))
-    return render_template('dashboard.html', center=center, centers=centers)
+    return render_template('dashboard.html', data=data)
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
@@ -41,24 +43,27 @@ def logout():
 @app.route('/profile', methods=["GET", "POST"])
 @login_required
 def my_profile():
-    pass
+    data = get_user_data()
+    # form = ProfileForm()
+    # if form.validate_on_submit():
+    #     pass
+    return render_template('profile.html')
 
 @app.route('/manager', methods=["GET", "POST"])
 @login_required
 @center_required
 def biz_manage():
+    data = get_user_data()
     form = BusinessForm()
-    center = session['center']
+    form.type.choices = [(g.id, g.name) for g in BizType.query.order_by('id')]
     if form.validate_on_submit():
-        store_biz_info(form)
-        flash('Record has been successfully updated.', 'info')
-        return redirect(url_for('biz_manage'))
-    active_biz_list = get_biz_info('all')
-    centers, = zip(*current_user.centers_list())
-    perms = current_user.user_perms_for(session['center'])
-    return render_template('manager.html', biz_list=active_biz_list,
-                           center=center, centers=centers, form=form,
-                           perms=perms)
+        if store_biz_info(form):
+            flash('Record has been successfully updated.', 'info')
+            return redirect(url_for('biz_manage'))
+        else:
+            flash('Record Update has Failed, Try Again!', 'error')
+    data['biz_list'] = get_biz_info('all')
+    return render_template('manager.html', data=data, form=form)
 
 @app.route('/_edit_biz', methods=["POST"])
 @login_required

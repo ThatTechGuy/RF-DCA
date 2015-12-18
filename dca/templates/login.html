@@ -16,8 +16,8 @@
             {% endif %}
             <form method="POST">
               <fieldset>
-                {{ render_field(form.email, class_='form-control', placeholder='Email', autofocus='autofocus') }}
-                {{ render_field(form.password, class_='form-control', placeholder='Password') }}
+                {{ render_field(form.email, placeholder='Email', autofocus='autofocus') }}
+                {{ render_field(form.password, placeholder='Password') }}
                 <div class="checkbox">
                   <label>
                     {{ form.remember }} {{ form.remember.label }}

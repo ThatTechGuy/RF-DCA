@@ -15,15 +15,26 @@
 {% endwith %}
 {% endmacro %}
 
-{% macro render_field(field) %}
+{% macro render_field(field, label=False) %}
   {% if field.errors %}
   <div class="form-group has-error">
     {% for error in field.errors %}
+      {% if label %}
+    <span class="help-block text-center"><strong>{{ error }}</strong></span>
+      {% else %}
     <label class="control-label">{{ error }}</label>
+      {% endif %}
     {% endfor %}
   {% else %}
   <div class=form-group>
   {% endif %}
-    {{ field(**kwargs)|safe }}
+  {% if label %}
+    {{ label(class_='col-sm-3 control-label') }}
+    <div class="col-sm-9">
+  {% endif %}
+      {{ field(class_='form-control', **kwargs)|safe }}
+  {% if label %}
+    </div>
+  {% endif %}
   </div>
 {% endmacro %}

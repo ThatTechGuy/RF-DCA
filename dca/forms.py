@@ -1,5 +1,6 @@
 from flask.ext.wtf import Form
-from wtforms.fields import HiddenField, TextField, PasswordField, BooleanField
+from wtforms.fields import BooleanField, HiddenField, PasswordField, \
+    SelectField, TextField
 from wtforms.validators import Required, Email
 
 class LoginForm(Form):
@@ -9,6 +10,7 @@ class LoginForm(Form):
 
 class BusinessForm(Form):
     id = HiddenField('Record ID', validators=[Required()])
+    type = SelectField('Business Type', coerce=int)
     name = TextField('Business Name', validators=[Required()])
     contact = TextField('Contact Name', validators=[Required()])
     phone = TextField('Phone Number', validators=[Required()])

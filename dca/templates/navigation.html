@@ -29,7 +29,7 @@
             <li class="sidebar-search">
               <select id="center-search" name="center" class="form-control select2">
                 <option></option>
-                {% for center in centers %}
+                {% for center in data.centers %}
                 <option value="{{ center }}">{{ center }}</option>
                 {% endfor %}
               </select>
@@ -37,7 +37,7 @@
             {% if session['center'] == None %}
             <li><a href="{{ url_for('dashboard') }}"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a></li>
             {% else %}
-            <li><a href="{{ url_for('center', center=center) }}"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('center', center=data.center) }}"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a></li>
             {% endif %}
             <li><a href="{{ url_for('biz_manage') }}"><i class="fa fa-folder fa-fw"></i> Manager</a></li>
             <li><a href="{{ url_for('user_admin') }}"><i class="fa fa-users fa-fw"></i> Users</a></li>
@@ -60,7 +60,7 @@
         allowClear: true
       });
 
-      var center = '{{ session['center'] }}';
+      var center = '{{ data.center }}';
       $('#center-search').select2('val', center);
 
       $('#center-search').on('change', function(e) {

@@ -23,6 +23,6 @@ login_manager.login_message_category = 'info'
 
 @login_manager.user_loader
 def load_user(userid):
-    return Employee.query.filter(Employee.id==userid).first()
+    return Employee.query.get(userid)
 
 from . import views
