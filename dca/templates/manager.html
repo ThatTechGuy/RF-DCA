@@ -25,9 +25,13 @@
                       <th>Business Name</th>
                       <th>Contact/Owner</th>
                       <th>Phone Number</th>
-                      <th>View</th>
-                      <th>Edit</th>
+                      <th>Examine</th>
+                      {% if data.perms.access.modBiz %}
+                      <th>Modify</th>
+                      {% endif %}
+                      {% if data.perms.access.delBiz %}
                       <th>Delete</th>
+                      {% endif %}
                     </tr>
                   </thead>
                   <tbody>
@@ -38,20 +42,24 @@
                       <td>{{ biz.info.contact }}</td>
                       <td>{{ biz.info.phone }}</td>
                       <td>
-                        <button class="btn btn-info btn-xs">
+                        <a class="btn btn-info btn-xs" href="{{ url_for('doc_manage', record=biz.info.id) }}" role="button">
                           <i class="fa fa-eye fa-large"></i>
-                        </button>
+                        </a>
                       </td>
+                      {% if data.perms.access.modBiz %}
                       <td>
                         <button class="btn btn-warning btn-xs" name="editBiz" data-id="{{ biz.info.id }}">
                           <i class="fa fa-pencil fa-large"></i>
                         </button>
                       </td>
+                      {% endif %}
+                      {% if data.perms.access.delBiz %}
                       <td>
                         <button class="btn btn-danger btn-xs"  name="deleteBiz" data-id="{{ biz.info.id }}">
                           <i class="fa fa-trash fa-large centered"></i>
                         </button>
                       </td>
+                      {% endif %}
                     </tr>
                     {% endfor %}
                   </tbody>
@@ -72,12 +80,14 @@
               <form id="editBizForm" class="form-horizontal" method="POST">
                 {{ form.id(value='') }}
                 <fieldset>
+                  <legend>Business Information</legend>
                   {{ render_field(form.name, form.name.label, autofocus='autofocus') }}
                   {{ render_field(form.type, form.type.label) }}
                 </fieldset>
                 <fieldset>
+                  <legend>Contact Information</legend>
                   {{ render_field(form.contact, form.contact.label) }}
-                  {{ render_field(form.phone, form.contact.label) }}
+                  {{ render_field(form.phone, form.phone.label) }}
                 </fieldset>
                 {{ form.csrf_token }}
               </form>
@@ -100,7 +110,13 @@
       $('#biz-index').DataTable({
         "responsive": true,
         "columnDefs": [{
+          {% if data.perms.access.modBiz and data.perms.access.delBiz %}
           "targets": [-1,-2,-3],
+          {% elif data.perms.access.modBiz or data.perms.access.delBiz %}
+          "targets": [-1,-2],
+          {% else %}
+          "targets": [-1],
+          {% endif %}
           "searchable": false,
           "orderable": false,
           "className": "text-center"
@@ -109,7 +125,7 @@
 
       $('button[name="editBiz"]').on('click', function(){
         $.ajax({
-          url: '{{ url_for('edit_biz') }}',
+          url: '{{ url_for('get_record', type='biz') }}',
           data: {
             id: $(this).attr('data-id')
           },

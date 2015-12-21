@@ -1,9 +1,10 @@
 from functools import wraps
 from flask import flash, redirect, session, url_for
 from flask.ext.login import current_user
+from datetime import date, timedelta
 
 from . import db
-from .models import Business, Center, Employee
+from .models import BizType, Business, Center, Document, Employee, EmpPosition
 
 def admin_perm_req(func):
     @wraps(func)
@@ -45,17 +46,38 @@ def check_pass(email, password):
         return False
     return user
 
-def get_user_data():
+def get_user_data(center=False):
     data = {'center': session['center']}
     data['centers'], = zip(*current_user.centers_list())
-    data['perms'] = current_user.user_perms_for(session['center'])
+    if center == 'all':
+        data['perms_list'] = current_user.user_perms_for(center)
+    data['perms'] = current_user.user_perms_for(data['center'])
     return data
 
-def get_biz_info(business, archived=0):
+def store_user_info(form):
+    user = Employee.query.get(current_user.id)
+    user.fullName = form.fullName.data
+    user.email = form.email.data
+    if form.password.data:
+        user.password = form.password.data
+    db.session.commit()
+    return user.id
+
+def get_rec_info(business, archived=0, document=False):
     center = Center.query.get(session['center'])
     if business == 'all':
         return center.businesses.filter_by(archived=archived).all()
-    return center.businesses.filter_by(bizId=business).first()
+    if document:
+        return Document.query.get_or_404(document)
+    record = center.businesses.filter_by(bizId=business).first_or_404()
+    documents = record.info.documents.with_entities(Document.typId).all()
+    if not documents: documents = [(-1,)]
+    return {'info': record.info, 'docs': documents}
+
+def doc_expire(documents):
+    for doc in documents:
+        pass
+
 
 def store_biz_info(form):
     business = Business.query.get(form.id.data)
@@ -65,3 +87,9 @@ def store_biz_info(form):
     business.phone = form.phone.data
     db.session.commit()
     return business.id
+
+def store_doc_info(form):
+    document = Document.query.get(form.id.data)
+    document.expiry = form.expiry.data
+    db.session.commit()
+    return document.id

@@ -17,6 +17,21 @@
               Information
             </div>
             <div class="panel-body">
+              <form class="form-horizontal" method="POST">
+                <fieldset>
+                  <legend>Personal</legend>
+                  {{ render_field(form.fullName, form.fullName.label) }}
+                  {{ render_field(form.position, form.position.label, disabled="disabled") }}
+                </fieldset>
+                <fieldset>
+                  <legend>Account</legend>
+                  {{ render_field(form.email, form.email.label) }}
+                  {{ render_field(form.password, form.password.label) }}
+                  {{ render_field(form.confirm, form.confirm.label) }}
+                </fieldset>
+                {{ form.csrf_token }}
+                <button type="submit" class="btn btn-primary pull-right">Save changes</button>
+              </form>
             </div>
           </div>
         </div>
@@ -26,9 +41,48 @@
               Permissions
             </div>
             <div class="panel-body">
+              <div class="dataTable_wrapper">
+                <table class="table table-striped table-bordered table-hover" id="perms-list">
+                  <thead>
+                    <tr>
+                      <th>Center</th>
+                      <th>Access</th>
+                      <th>Moderator</th>
+                      <th>Rostered</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% set ternary = ['No','Yes'] %}
+                    {% for perm in data.perms_list %}
+                    <tr>
+                      <td>{{ perm.cenId }}</td>
+                      <td>{{ perm.access.level }}</td>
+                      <td>{{ ternary[perm.access.moderator] }}</td>
+                      <td>{{ ternary[perm.roster] }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+{% endblock %}
+
+{% block script %}
+  {{ super() }}
+
+  <script>
+    $(function() {
+      $('#perms-list').DataTable({
+        "responsive": true,
+        "bFilter": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "bSort": false
+      });
+    });
+  </script>
 {% endblock %}

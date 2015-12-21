@@ -3,10 +3,12 @@ from flask import abort, flash, jsonify, render_template, redirect, request, \
 from flask.ext.login import current_user, login_required, login_user, logout_user
 
 from . import app
-from .forms import BusinessForm, LoginForm
-from .models import BizType
-from .util import admin_perm_req, center_required, check_pass, get_biz_info, \
-    get_user_data, mod_perm_req, store_biz_info
+from .forms import BusinessForm, DocumentForm, LoginForm, UserInfoForm, \
+    UserPermForm
+from .models import BizType, DocType, EmpPosition
+from .util import admin_perm_req, center_required, check_pass, doc_expire, \
+    get_rec_info, get_user_data, mod_perm_req, store_biz_info, store_doc_info, \
+    store_user_info
 
 @app.route('/', defaults={'center': None})
 @app.route('/center/<center>', endpoint='center')
@@ -14,8 +16,7 @@ from .util import admin_perm_req, center_required, check_pass, get_biz_info, \
 def dashboard(center):
     session['center'] = center
     if not center: center = ''
-    data = {'center': center}
-    data['centers'], = zip(*current_user.centers_list())
+    data = get_user_data()
     if center and int(center) not in data['centers']:
         flash('You Do Not Have Permission to Access This Center!', 'error')
         return redirect(url_for('dashboard'))
@@ -43,11 +44,19 @@ def logout():
 @app.route('/profile', methods=["GET", "POST"])
 @login_required
 def my_profile():
-    data = get_user_data()
-    # form = ProfileForm()
-    # if form.validate_on_submit():
-    #     pass
-    return render_template('profile.html')
+    data = get_user_data(center='all')
+    form = UserInfoForm()
+    form.position.choices = [(c.id, c.title) for c in EmpPosition.query.order_by('id')]
+    if form.validate_on_submit():
+        if store_user_info(form):
+            flash('Your profile has been successfully updated', 'info')
+            return redirect(url_for('my_profile'))
+        else:
+            flash('Profile Update has Failed, Try Again!', 'error')
+    form.fullName.data = current_user.fullName
+    form.position.data = current_user.position.id
+    form.email.data = current_user.email
+    return render_template('profile.html', data=data, form=form)
 
 @app.route('/manager', methods=["GET", "POST"])
 @login_required
@@ -55,36 +64,60 @@ def my_profile():
 def biz_manage():
     data = get_user_data()
     form = BusinessForm()
-    form.type.choices = [(g.id, g.name) for g in BizType.query.order_by('id')]
-    if form.validate_on_submit():
+    form.type.choices = [(c.id, c.name) for c in BizType.query.order_by('id')]
+    if form.validate_on_submit() and data['perms'].access.modBiz:
         if store_biz_info(form):
             flash('Record has been successfully updated.', 'info')
             return redirect(url_for('biz_manage'))
         else:
             flash('Record Update has Failed, Try Again!', 'error')
-    data['biz_list'] = get_biz_info('all')
+    data['biz_list'] = get_rec_info('all')
     return render_template('manager.html', data=data, form=form)
 
-@app.route('/_edit_biz', methods=["POST"])
-@login_required
-@center_required
-def edit_biz():
-    bizId = request.form['id']
-    biz = get_biz_info(bizId)
-    business = {
-        'id': biz.info.id,
-        'type': biz.info.type.id,
-        'name': biz.info.name,
-        'contact': biz.info.contact,
-        'phone': biz.info.phone
-    }
-    return jsonify(business)
-
-@app.route('/record/<record>', methods=["GET", "POST"])
+@app.route('/manager/record/<record>', methods=["GET", "POST"])
 @login_required
 @center_required
 def doc_manage(record):
-    pass
+    data = get_user_data()
+    form = DocumentForm()
+    form.type.choices = [(c.id, c.name) for c in DocType.query.order_by('id')]
+    if form.validate_on_submit() and data['perms'].access.modDoc:
+        if store_doc_info(form):
+            flash('Document has been successfully updated.', 'info')
+            return redirect(url_for('doc_manage', record=record))
+        else:
+            flash('Document Update has Failed, Try Again!', 'error')
+    data['record'] = get_rec_info(record)
+    data['record']['docs'], = zip(*data['record']['docs'])
+    data['expire'] = doc_expire(data['record']['info'].documents)
+    return render_template('record.html', data=data, form=form)
+
+@app.route('/_get_record/<type>', methods=["POST"])
+@login_required
+@center_required
+def get_record(type):
+    if type == 'biz':
+        bizId = request.form['id']
+        biz = get_rec_info(bizId)
+        business = {
+            'id': biz['info'].id,
+            'type': biz['info'].type.id,
+            'name': biz['info'].name,
+            'contact': biz['info'].contact,
+            'phone': biz['info'].phone
+        }
+        return jsonify(business)
+    elif type == 'doc':
+        docId = request.form['id']
+        doc = get_rec_info(None, document=docId)
+        document = {
+            'id': doc.id,
+            'type': doc.type.id,
+            'expiry': doc.expiry.strftime('%m/%d/%Y'),
+        }
+        return jsonify(document)
+    else:
+        abort(400)
 
 @app.route('/users', methods=["GET", "POST"])
 @login_required

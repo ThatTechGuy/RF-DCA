@@ -1,0 +1,183 @@
+{% extends "navigation.html" %}
+
+{% from "macros.html" import show_flash, render_field with context %}
+{% block page %}
+    <div id="page-wrapper">
+      <div class="row">
+        <div class="col-lg-12">
+          {{ show_flash('error', 'danger', 'exclamation-sign') }}
+          {{ show_flash('info', 'info', 'info-sign') }}
+          <h1 class="page-header">Business Record</h1>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              Information
+            </div>
+            <div class="panel-body">
+              <h3>
+                {{ data.record.info.name }}
+                <span class="label label-primary pull-right">
+                  {{ data.record.info.type.name }}
+                </span>
+              </h3>
+              <table class="table">
+                <caption>Registered Agent or Officer
+                <thead>
+                  <tr>
+                    <th>Contact Name</th>
+                    <th>Phone Number</th>
+                  </td>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{{ data.record.info.contact }}</td>
+                    <td>{{ data.record.info.phone }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="panel panel-info">
+                <div class="panel-heading">
+                  Document Requirements
+                </div>
+                <ul class="list-group">
+                {% for req in data.record.info.type.requirements %}
+                  {% if req.docType in data.record.docs %}
+                  <li class="list-group-item list-group-item-success">{{ req.type.name }}</li>
+                  {% else %}
+                  <li class="list-group-item list-group-item-danger">{{ req.type.name }}</li>
+                  {% endif %}
+                {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              Documents
+            </div>
+            <div class="panel-body">
+              <div class="dataTable_wrapper">
+                <table class="table table-striped table-bordered table-hover" id="docs-list">
+                  <thead>
+                    <tr>
+                      <th>Doc Type</th>
+                      <th>Expiration</th>
+                      {% if data.perms.access.modDoc %}
+                      <th>Modify</th>
+                      {% endif %}
+                      {% if data.perms.access.delDoc %}
+                      <th>Delete</th>
+                      {% endif %}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for doc in data.record.info.documents %}
+                    <tr>
+                      <td>{{ doc.type.name }}</td>
+                      <td>{{ doc.expiry.strftime('%m/%d/%Y') }}</td>
+                      {% if data.perms.access.modDoc %}
+                      <td>
+                        <button class="btn btn-warning btn-xs" name="editDoc" data-id="{{ doc.id }}">
+                          <i class="fa fa-pencil fa-large"></i>
+                        </button>
+                      </td>
+                      {% endif %}
+                      {% if data.perms.access.delDoc %}
+                      <td>
+                        <button class="btn btn-danger btn-xs"  name="deleteDoc" data-id="{{ doc.id }}">
+                          <i class="fa fa-trash fa-large centered"></i>
+                        </button>
+                      </td>
+                      {% endif %}
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="editModalLabel">Modify Business Document</h4>
+            </div>
+            <div class="modal-body">
+              <form id="editDocForm" class="form-horizontal" method="POST">
+                {{ form.id(value='') }}
+                <fieldset>
+                  <legend>Document Information</legend>
+                  {{ render_field(form.type, form.type.label, disabled='disabled') }}
+                  {{ render_field(form.expiry, form.expiry.label, autofocus='autofocus') }}
+                </fieldset>
+                {{ form.csrf_token }}
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="submit" form="editDocForm" class="btn btn-primary">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+  {{ super() }}
+
+  <script>
+    $(function() {
+      $('#docs-list').DataTable({
+        "responsive": true,
+        "bFilter": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "bSort": false,
+        {% if data.perms.access.modDoc or data.perms.access.delDoc %}
+        "columnDefs": [{
+          {% if data.perms.access.modDoc and data.perms.access.delDoc %}
+          "targets": [-1,-2],
+          {% else %}
+          "targets": [-1],
+          {% endif %}
+          "className": "text-center"
+        }]
+        {% endif %}
+      });
+
+      $('button[name="editDoc"]').on('click', function(){
+        $.ajax({
+          url: '{{ url_for('get_record', type='doc') }}',
+          data: {
+            id: $(this).attr('data-id')
+          },
+          type: 'POST',
+          success: function(data) {
+            $('#id').val(data.id);
+            $('#type').val(data.type);
+            $('#expiry').val(data.expiry);
+            $('#editModal').modal();
+          },
+          error: function(error) {
+            console.log(error);
+          }
+        });
+      });
+
+      var error = {{ (form.errors|length == 0)|lower }};
+      if (!error){
+        $('#editModal').modal('show');
+      }
+
+    });
+  </script>
+{% endblock %}

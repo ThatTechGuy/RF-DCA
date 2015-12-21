@@ -6,7 +6,7 @@ from . import bcrypt, db
 
 class Center(db.Model):
     id = db.Column(MEDIUMINT(8, unsigned=True), primary_key=True,
-                             autoincrement=False)
+                   autoincrement=False)
     phone = db.Column(VARCHAR(10), nullable=False)
     location = db.Column(VARCHAR(255), nullable=False)
     businesses = db.relationship('CenterBusiness', lazy='dynamic')
@@ -39,11 +39,13 @@ class Employee(db.Model,UserMixin):
     def is_valid_pass(self, plaintext):
         return bcrypt.check_password_hash(self._password, plaintext)
 
-    def user_perms_for(self, center):
-        return self.permissions.filter_by(cenId=center).first()
-
     def centers_list(self):
         return self.permissions.with_entities(CenterEmployee.cenId).all()
+
+    def user_perms_for(self, center):
+        if center == 'all':
+            return self.permissions.all()
+        return self.permissions.filter_by(cenId=center).first()
 
 class EmpPosition(db.Model):
     id = db.Column(TINYINT(2, unsigned=True), primary_key=True,
@@ -68,28 +70,28 @@ class CenterEmployee(db.Model):
                                     ondelete='RESTRICT'),
                       nullable=False)
     access = db.relationship('CeAccess', backref='center_employees',
-                               lazy='subquery')
+                             lazy='subquery')
     roster = db.Column(TINYINT(1, unsigned=True), nullable=False,
                        server_default='1')
 
 class CeAccess(db.Model):
     id = db.Column(MEDIUMINT(8, unsigned=True), primary_key=True,
                    autoincrement=True)
-    access = db.Column(VARCHAR(255), nullable=False)
+    level = db.Column(VARCHAR(255), nullable=False)
     addDoc = db.Column(TINYINT(1, unsigned=True), nullable=False,
-                          server_default='0')
+                       server_default='0')
     modDoc = db.Column(TINYINT(1, unsigned=True), nullable=False,
-                          server_default='0')
+                       server_default='0')
     delDoc = db.Column(TINYINT(1, unsigned=True), nullable=False,
-                          server_default='0')
+                       server_default='0')
     addBiz = db.Column(TINYINT(1, unsigned=True), nullable=False,
-                          server_default='0')
+                       server_default='0')
     modBiz = db.Column(TINYINT(1, unsigned=True), nullable=False,
-                          server_default='0')
+                       server_default='0')
     delBiz = db.Column(TINYINT(1, unsigned=True), nullable=False,
-                          server_default='0')
+                       server_default='0')
     moderator = db.Column(TINYINT(1, unsigned=True), nullable=False,
-                          server_default='0')
+                       server_default='0')
 
 class Business(db.Model):
     id = db.Column(MEDIUMINT(8, unsigned=True), primary_key=True,
@@ -100,16 +102,19 @@ class Business(db.Model):
                                     ondelete='RESTRICT'),
                       nullable=False)
     type = db.relationship('BizType', backref='businesses',
-                               lazy='subquery')
+                           lazy='subquery')
     name = db.Column(VARCHAR(255), nullable=False)
     contact = db.Column(VARCHAR(255), nullable=False)
     phone = db.Column(VARCHAR(10), nullable=False)
+    documents = db.relationship('Document', backref='business',
+                                lazy='dynamic')
 
 class BizType(db.Model):
     id = db.Column(TINYINT(2, unsigned=True), primary_key=True,
                    autoincrement=False)
     name = db.Column(VARCHAR(255), nullable=False)
     description = db.Column(VARCHAR(255), nullable=False)
+    requirements = db.relationship('TypeRequire', lazy='dynamic')
 
 class CenterBusiness(db.Model):
     cenId = db.Column(MEDIUMINT(8, unsigned=True),
@@ -123,6 +128,45 @@ class CenterBusiness(db.Model):
                                     ondelete='RESTRICT'),
                       primary_key=True)
     info = db.relationship('Business', backref='centers',
-                               lazy='joined')
+                           lazy='joined')
     archived = db.Column(TINYINT(1, unsigned=True), nullable=False,
                          server_default='0')
+
+class Document(db.Model):
+    id = db.Column(MEDIUMINT(8, unsigned=True), primary_key=True,
+                   autoincrement=True)
+    typId = db.Column(TINYINT(2, unsigned=True),
+                      db.ForeignKey('doc_type.id',
+                                    onupdate='RESTRICT',
+                                    ondelete='RESTRICT'),
+                      nullable=False)
+    type = db.relationship('DocType', backref='documents',
+                           lazy='subquery')
+    bizId = db.Column(MEDIUMINT(8, unsigned=True),
+                      db.ForeignKey('business.id',
+                                    onupdate='RESTRICT',
+                                    ondelete='RESTRICT'),
+                      nullable=False)
+    store = db.Column(VARCHAR(255), nullable=True)
+    expiry = db.Column(db.DateTime, nullable=False)
+
+class DocType(db.Model):
+    id = db.Column(TINYINT(2, unsigned=True), primary_key=True,
+                   autoincrement=False)
+    name = db.Column(VARCHAR(255), nullable=False)
+    description = db.Column(VARCHAR(255), nullable=False)
+
+class TypeRequire(db.Model):
+    bizType = db.Column(TINYINT(2, unsigned=True),
+                        db.ForeignKey('biz_type.id',
+                                      onupdate='RESTRICT',
+                                      ondelete='RESTRICT'),
+                      primary_key=True)
+    docType = db.Column(TINYINT(2, unsigned=True),
+                        db.ForeignKey('doc_type.id',
+                                      onupdate='RESTRICT',
+                                      ondelete='RESTRICT'),
+                        primary_key=True)
+    type = db.relationship('DocType', lazy='joined')
+    available = db.Column(TINYINT(1, unsigned=True), nullable=False,
+                          server_default='0')
