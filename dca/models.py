@@ -10,6 +10,7 @@ class Center(db.Model):
     phone = db.Column(VARCHAR(10), nullable=False)
     location = db.Column(VARCHAR(255), nullable=False)
     businesses = db.relationship('CenterBusiness', lazy='dynamic')
+    employees = db.relationship('CenterEmployee', lazy='dynamic')
 
 class Employee(db.Model,UserMixin):
     id = db.Column(MEDIUMINT(8, unsigned=True), primary_key=True,
@@ -64,6 +65,8 @@ class CenterEmployee(db.Model):
                                     onupdate='RESTRICT',
                                     ondelete='RESTRICT'),
                       primary_key=True)
+    data = db.relationship('Employee', backref='centers',
+                           lazy='subquery')
     accId = db.Column(MEDIUMINT(8, unsigned=True),
                       db.ForeignKey('ce_access.id',
                                     onupdate='RESTRICT',

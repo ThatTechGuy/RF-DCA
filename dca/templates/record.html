@@ -44,7 +44,9 @@
                 </div>
                 <ul class="list-group">
                 {% for req in data.record.info.type.requirements %}
-                  {% if req.docType in data.record.docs %}
+                  {% if req.docType in data.expire.exp_60 %}
+                  <li class="list-group-item list-group-item-warning">{{ req.type.name }}</li>
+                  {% elif req.docType in data.record.docs %}
                   <li class="list-group-item list-group-item-success">{{ req.type.name }}</li>
                   {% else %}
                   <li class="list-group-item list-group-item-danger">{{ req.type.name }}</li>
@@ -59,6 +61,9 @@
           <div class="panel panel-default">
             <div class="panel-heading">
               Documents
+              <button class="btn btn-primary btn-xs pull-right" data-toggle="modal" data-target="#addModal">
+                <i class="fa fa-plus fa-2x"></i>
+              </button>
             </div>
             <div class="panel-body">
               <div class="dataTable_wrapper">
@@ -103,6 +108,34 @@
           </div>
         </div>
       </div>
+      {% if data.perms.access.addDoc %}
+      <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="addModalLabel">New Business Document</h4>
+            </div>
+            <div class="modal-body">
+              <form id="addDocForm" class="form-horizontal" method="POST">
+                {{ form_new.bizId(value=data.record.info.id) }}
+                <fieldset>
+                  <legend>Document Information</legend>
+                  {{ render_field(form_new.type, form_new.type.label, autofocus='autofocus') }}
+                  {{ render_field(form_new.expiry, form_new.expiry.label) }}
+                </fieldset>
+                {{ form_new.csrf_token }}
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="submit" form="addDocForm" class="btn btn-primary">Create</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      {% if data.perms.access.modDoc %}
       <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
@@ -128,6 +161,7 @@
           </div>
         </div>
       </div>
+      {% endif %}
     </div>
 {% endblock %}
 
@@ -154,6 +188,7 @@
         {% endif %}
       });
 
+      {% if data.perms.access.modDoc %}
       $('button[name="editDoc"]').on('click', function(){
         $.ajax({
           url: '{{ url_for('get_record', type='doc') }}',
@@ -162,9 +197,9 @@
           },
           type: 'POST',
           success: function(data) {
-            $('#id').val(data.id);
-            $('#type').val(data.type);
-            $('#expiry').val(data.expiry);
+            $('#editDocForm #id').val(data.id);
+            $('#editDocForm #type').val(data.type);
+            $('#editDocForm #expiry').val(data.expiry);
             $('#editModal').modal();
           },
           error: function(error) {
@@ -172,6 +207,26 @@
           }
         });
       });
+      {% endif %}
+
+      {% if data.perms.access.delDoc %}
+      $('button[name="deleteDoc"]').on('click', function(){
+        $.ajax({
+          url: '{{ url_for('get_record', type='doc') }}',
+          data: {
+            id: $(this).attr('data-id'),
+            action: 'delete'
+          },
+          type: 'POST',
+          success: function() {
+            window.location.reload(true);
+          },
+          error: function(error) {
+            console.log(error);
+          }
+        });
+      });
+      {% endif %}
 
       var error = {{ (form.errors|length == 0)|lower }};
       if (!error){

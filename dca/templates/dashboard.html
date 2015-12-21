@@ -18,7 +18,7 @@
                   <i class="fa fa-briefcase fa-5x"></i>
                 </div>
                 <div class="col-xs-9 text-right">
-                  <div class="huge">26</div>
+                  <div class="huge">{{ data.stats|length }}</div>
                   <div>Active Businesses</div>
                 </div>
               </div>
@@ -40,7 +40,7 @@
                   <i class="fa fa-check fa-5x"></i>
                 </div>
                 <div class="col-xs-9 text-right">
-                  <div class="huge">12</div>
+                  <div class="huge">{{ data.stats|length - 10 }}</div>
                   <div>Completed Records</div>
                 </div>
               </div>
@@ -62,8 +62,8 @@
                   <i class="fa fa-exclamation-triangle fa-5x"></i>
                 </div>
                 <div class="col-xs-9 text-right">
-                  <div class="huge">124</div>
-                  <div>Expiring in 90 Days</div>
+                  <div class="huge">{{ data.expire.exp_60|length }}</div>
+                  <div>Expiring in 60 Days</div>
                 </div>
               </div>
             </div>
@@ -84,7 +84,7 @@
                   <i class="fa fa-bell fa-5x"></i>
                 </div>
                 <div class="col-xs-9 text-right">
-                  <div class="huge">13</div>
+                  <div class="huge">{{ data.expire.exp_30|length }}</div>
                   <div>Expiring in 30 Days</div>
                 </div>
               </div>

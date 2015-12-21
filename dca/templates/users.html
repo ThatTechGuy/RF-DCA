@@ -7,62 +7,51 @@
         <div class="col-lg-12">
           {{ show_flash('error', 'danger', 'exclamation-sign') }}
           {{ show_flash('info', 'info', 'info-sign') }}
-          <h1 class="page-header">Business Records</h1>
+          <h1 class="page-header">User Administration</h1>
         </div>
       </div>
       <div class="row">
         <div class="col-lg-12">
           <div class="panel panel-default">
             <div class="panel-heading">
-              Active Business Records
+              Rostered Employee Users
               <button class="btn btn-primary btn-xs pull-right" data-toggle="modal" data-target="#addModal">
                 <i class="fa fa-plus fa-2x"></i>
               </button>
             </div>
             <div class="panel-body">
               <div class="dataTable_wrapper">
-                <table class="table table-striped table-bordered table-hover" id="biz-index">
+                <table class="table table-striped table-bordered table-hover" id="user-list">
                   <thead>
                     <tr>
-                      <th>Type</th>
-                      <th>Business Name</th>
-                      <th>Contact/Owner</th>
-                      <th>Phone Number</th>
-                      <th>Examine</th>
-                      {% if data.perms.access.modBiz %}
+                      <th>Position</th>
+                      <th>Full Name</th>
+                      <th>Email</th>
+                      <th>Access</th>
+                      <th>Moderator</th>
                       <th>Modify</th>
-                      {% endif %}
-                      {% if data.perms.access.delBiz %}
-                      <th>Archive</th>
-                      {% endif %}
+                      <th>Delete</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {% for biz in data.biz_list %}
+                    {% set ternary = ['No','Yes'] %}
+                    {% for user in data.user_list %}
                     <tr>
-                      <td>{{ biz.info.type.name }}</td>
-                      <td>{{ biz.info.name }}</td>
-                      <td>{{ biz.info.contact }}</td>
-                      <td>{{ biz.info.phone }}</td>
+                      <td>{{ user.data.position.title }}</td>
+                      <td>{{ user.data.fullName }}</td>
+                      <td>{{ user.data.email }}</td>
+                      <td>{{ user.access.level }}</td>
+                      <td>{{ ternary[user.access.moderator] }}</td>
                       <td>
-                        <a class="btn btn-info btn-xs" href="{{ url_for('doc_manage', record=biz.info.id) }}" role="button">
-                          <i class="fa fa-eye fa-large"></i>
-                        </a>
-                      </td>
-                      {% if data.perms.access.modBiz %}
-                      <td>
-                        <button class="btn btn-warning btn-xs" name="editBiz" data-id="{{ biz.info.id }}">
+                        <button class="btn btn-warning btn-xs" name="editUser" data-id="{{ user.data.id }}">
                           <i class="fa fa-pencil fa-large"></i>
                         </button>
                       </td>
-                      {% endif %}
-                      {% if data.perms.access.delBiz %}
                       <td>
-                        <button class="btn btn-danger btn-xs"  name="deleteBiz" data-id="{{ biz.info.id }}">
-                          <i class="fa fa-archive fa-large centered"></i>
+                        <button class="btn btn-danger btn-xs"  name="deleteUser" data-id="{{ user.data.id }}">
+                          <i class="fa fa-trash fa-large centered"></i>
                         </button>
                       </td>
-                      {% endif %}
                     </tr>
                     {% endfor %}
                   </tbody>
@@ -72,70 +61,68 @@
           </div>
         </div>
       </div>
-      {% if data.perms.access.addBiz %}
       <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-              <h4 class="modal-title" id="addModalLabel">New Business Record</h4>
+              <h4 class="modal-title" id="addModalLabel">New Employee User</h4>
             </div>
             <div class="modal-body">
-              <form id="addBizForm" class="form-horizontal" method="POST">
+              <form id="addUserForm" class="form-horizontal" method="POST">
                 {{ form_new.form(value='add') }}
                 <fieldset>
-                  <legend>Business Information</legend>
-                  {{ render_field(form_new.name, form_new.name.label, autofocus='autofocus') }}
-                  {{ render_field(form_new.type, form_new.type.label) }}
+                  <legend>Personal Information</legend>
+                  {{ render_field(form_new.fullName, form_new.fullName.label, autofocus='autofocus') }}
+                  {{ render_field(form_new.position, form_new.position.label) }}
                 </fieldset>
                 <fieldset>
-                  <legend>Contact Information</legend>
-                  {{ render_field(form_new.contact, form_new.contact.label) }}
-                  {{ render_field(form_new.phone, form_new.phone.label) }}
+                  <legend>Account Details</legend>
+                  {{ render_field(form_new.email, form_new.email.label) }}
+                  {{ render_field(form_new.password, form_new.password.label) }}
+                  {{ render_field(form_new.confirm, form_new.confirm.label) }}
                 </fieldset>
                 {{ form_new.csrf_token }}
               </form>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              <button type="submit" form="addBizForm" class="btn btn-primary">Create Record</button>
+              <button type="submit" form="addUserForm" class="btn btn-primary">Create User</button>
             </div>
           </div>
         </div>
       </div>
-      {% endif %}
-      {% if data.perms.access.modBiz %}
       <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-              <h4 class="modal-title" id="editModalLabel">Modify Business Record</h4>
+              <h4 class="modal-title" id="editModalLabel">Modify Employee User</h4>
             </div>
             <div class="modal-body">
-              <form id="editBizForm" class="form-horizontal" method="POST">
+              <form id="editUserForm" class="form-horizontal" method="POST">
                 {{ form.id(value='') }}
                 <fieldset>
-                  <legend>Business Information</legend>
-                  {{ render_field(form.name, form.name.label, autofocus='autofocus') }}
-                  {{ render_field(form.type, form.type.label) }}
+                  <legend>Personal Information</legend>
+                  {{ render_field(form.fullName, form.fullName.label, autofocus='autofocus') }}
+                  {{ render_field(form.position, form.position.label) }}
                 </fieldset>
                 <fieldset>
-                  <legend>Contact Information</legend>
-                  {{ render_field(form.contact, form.contact.label) }}
-                  {{ render_field(form.phone, form.phone.label) }}
+                  <legend>Account Details</legend>
+                  {{ render_field(form.email, form.email.label) }}
+                  {{ render_field(form.password, form.password.label) }}
+                  {{ render_field(form.confirm, form.confirm.label) }}
                 </fieldset>
                 {{ form.csrf_token }}
               </form>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              <button type="submit" form="editBizForm" class="btn btn-primary">Save changes</button>
+              <button type="submit" form="editUserForm" class="btn btn-primary">Save changes</button>
             </div>
           </div>
         </div>
       </div>
-      {% endif %}
     </div>
 {% endblock %}
 
@@ -144,36 +131,28 @@
 
   <script>
     $(function() {
-      $('#biz-index').DataTable({
+      $('#user-list').DataTable({
         "responsive": true,
         "columnDefs": [{
-          {% if data.perms.access.modBiz and data.perms.access.delBiz %}
-          "targets": [-1,-2,-3],
-          {% elif data.perms.access.modBiz or data.perms.access.delBiz %}
           "targets": [-1,-2],
-          {% else %}
-          "targets": [-1],
-          {% endif %}
           "searchable": false,
           "orderable": false,
           "className": "text-center"
         }]
       });
 
-      {% if data.perms.access.modBiz %}
-      $('button[name="editBiz"]').on('click', function(){
+      $('button[name="editUser"]').on('click', function(){
         $.ajax({
-          url: '{{ url_for('get_record', type='biz') }}',
+          url: '{{ url_for('get_record', type='user') }}',
           data: {
             id: $(this).attr('data-id')
           },
           type: 'POST',
           success: function(data) {
-            $('#editBizForm #id').val(data.id);
-            $('#editBizForm #name').val(data.name);
-            $('#editBizForm #type').val(data.type);
-            $('#editBizForm #contact').val(data.contact);
-            $('#editBizForm #phone').val(data.phone);
+            $('#editUserForm #id').val(data.id);
+            $('#editUserForm #fullName').val(data.fullName);
+            $('#editUserForm #position').val(data.position);
+            $('#editUserForm #email').val(data.email);
             $('#editModal').modal();
           },
           error: function(error) {
@@ -181,12 +160,10 @@
           }
         });
       });
-      {% endif %}
 
-      {% if data.perms.access.delBiz %}
-      $('button[name="deleteBiz"]').on('click', function(){
+      $('button[name="deleteUser"]').on('click', function(){
         $.ajax({
-          url: '{{ url_for('get_record', type='biz') }}',
+          url: '{{ url_for('get_record', type='user') }}',
           data: {
             id: $(this).attr('data-id'),
             action: 'delete'
@@ -200,7 +177,6 @@
           }
         });
       });
-      {% endif %}
 
       var error = {{ (form.errors|length == 0)|lower }};
       if (!error){

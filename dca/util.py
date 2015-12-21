@@ -1,16 +1,16 @@
 from functools import wraps
 from flask import flash, redirect, session, url_for
 from flask.ext.login import current_user
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 
 from . import db
-from .models import BizType, Business, Center, Document, Employee, EmpPosition
+from .models import BizType, Business, Center, CenterBusiness, Document, \
+    Employee, EmpPosition
 
 def admin_perm_req(func):
     @wraps(func)
     def decorated_function(*args, **kwargs):
-        admin = current_user.admin
-        if not admin:
+        if not current_user.admin:
             flash('You Do Not Have Permission to Access This Page!', 'error')
             return redirect(url_for('dashboard'))
         return func(*args, **kwargs)
@@ -54,6 +54,14 @@ def get_user_data(center=False):
     data['perms'] = current_user.user_perms_for(data['center'])
     return data
 
+def get_user_list():
+    center = Center.query.get(session['center'])
+    return center.employees.filter_by(roster=1).all()
+
+def get_user_info(uid):
+    user = Employee.query.get(uid)
+    return user
+
 def store_user_info(form):
     user = Employee.query.get(current_user.id)
     user.fullName = form.fullName.data
@@ -74,10 +82,21 @@ def get_rec_info(business, archived=0, document=False):
     if not documents: documents = [(-1,)]
     return {'info': record.info, 'docs': documents}
 
-def doc_expire(documents):
-    for doc in documents:
-        pass
+def get_stats():
+    return Business.query.with_entities(Business.id).all()
 
+def doc_expire(documents):
+    if documents == 'all':
+        documents = Document.query.all()
+    expire_list = {'exp_30': [], 'exp_60': []}
+    for doc in documents:
+        if (doc.expiry - timedelta(days=30)) <= datetime.today():
+            expire_list['exp_30'].append([doc.id, doc.typId])
+        if (doc.expiry - timedelta(days=60)) <= datetime.today():
+            expire_list['exp_60'].append([doc.id, doc.typId])
+    if not expire_list['exp_30']: expire_list['exp_30'] = [[-1,-1]]
+    if not expire_list['exp_60']: expire_list['exp_60'] = [[-1,-1]]
+    return expire_list
 
 def store_biz_info(form):
     business = Business.query.get(form.id.data)
@@ -93,3 +112,38 @@ def store_doc_info(form):
     document.expiry = form.expiry.data
     db.session.commit()
     return document.id
+
+def add_new_record(form,type='biz'):
+    if type == 'biz':
+        new = Business(typId=form.type.data, name=form.name.data,
+                       contact=form.contact.data, phone=form.phone.data)
+        db.session.add(new)
+        db.session.commit()
+        assoc = CenterBusiness(cenId=session['center'], bizId=new.id)
+        db.session.add(assoc)
+        db.session.commit()
+        return new.id
+    elif type == 'doc':
+        new = Document(typId=form.type.data, bizId=form.bizId.data,
+                       expiry=form.expiry.data)
+        db.session.add(new)
+        db.session.commit()
+        return new.id
+    else:
+        abort(400)
+
+def delete_record(record,type='biz'):
+    if type == 'biz':
+        center = Center.query.get(session['center'])
+        business = center.businesses.filter_by(bizId=record).first()
+        business.archived = 1
+        db.session.commit()
+        flash('Record has been placed in the archive.', 'info')
+        return record
+    elif type == 'doc':
+        Document.query.filter_by(id=record).delete()
+        db.session.commit()
+        flash('Document has been removed from the record.', 'info')
+        return record
+    else:
+        abort(400)
