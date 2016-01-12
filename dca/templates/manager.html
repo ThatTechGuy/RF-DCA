@@ -14,7 +14,7 @@
         <div class="col-lg-12">
           <div class="panel panel-default">
             <div class="panel-heading">
-              Active Business Records
+              Active Businesses
               <button class="btn btn-primary btn-xs pull-right" data-toggle="modal" data-target="#addModal">
                 <i class="fa fa-plus fa-2x"></i>
               </button>
@@ -82,18 +82,18 @@
             </div>
             <div class="modal-body">
               <form id="addBizForm" class="form-horizontal" method="POST">
-                {{ form_new.form(value='add') }}
+                {{ form.id(value='new') }}
                 <fieldset>
                   <legend>Business Information</legend>
-                  {{ render_field(form_new.name, form_new.name.label, autofocus='autofocus') }}
-                  {{ render_field(form_new.type, form_new.type.label) }}
+                  {{ render_field(form.name, form.name.label, autofocus='autofocus') }}
+                  {{ render_field(form.type, form.type.label) }}
                 </fieldset>
                 <fieldset>
                   <legend>Contact Information</legend>
-                  {{ render_field(form_new.contact, form_new.contact.label) }}
-                  {{ render_field(form_new.phone, form_new.phone.label) }}
+                  {{ render_field(form.contact, form.contact.label) }}
+                  {{ render_field(form.phone, form.phone.label) }}
                 </fieldset>
-                {{ form_new.csrf_token }}
+                {{ form.csrf_token }}
               </form>
             </div>
             <div class="modal-footer">
@@ -163,9 +163,9 @@
       {% if data.perms.access.modBiz %}
       $('button[name="editBiz"]').on('click', function(){
         $.ajax({
-          url: '{{ url_for('get_record', type='biz') }}',
+          url: '{{ url_for('get_data', type='biz') }}',
           data: {
-            id: $(this).attr('data-id')
+            bizId: $(this).attr('data-id')
           },
           type: 'POST',
           success: function(data) {
@@ -186,10 +186,10 @@
       {% if data.perms.access.delBiz %}
       $('button[name="deleteBiz"]').on('click', function(){
         $.ajax({
-          url: '{{ url_for('get_record', type='biz') }}',
+          url: '{{ url_for('get_data', type='biz') }}',
           data: {
-            id: $(this).attr('data-id'),
-            action: 'delete'
+            bizId: $(this).attr('data-id'),
+            action: 'archive'
           },
           type: 'POST',
           success: function() {

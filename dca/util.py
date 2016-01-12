@@ -4,8 +4,8 @@ from flask.ext.login import current_user
 from datetime import datetime, timedelta
 
 from . import db
-from .models import BizType, Business, Center, CenterBusiness, Document, \
-    Employee, EmpPosition
+from .models import BizType, Business, Center, CenterBusiness, CenterEmployee, \
+    Document, Employee, EmpPosition
 
 def admin_perm_req(func):
     @wraps(func)
@@ -54,6 +54,23 @@ def get_user_data(center=False):
     data['perms'] = current_user.user_perms_for(data['center'])
     return data
 
+def get_stats():
+    return Business.query.with_entities(Business.id).all()
+
+def doc_expire(documents, ref, att=0):
+    if documents == 'all':
+        documents = Document.query.all()
+    expire_list = []
+    for doc in documents:
+        if (doc.expiry - timedelta(days=ref)) <= datetime.today():
+            expire_list.append([doc.id, doc.typId])
+    if not expire_list: expire_list = [[-1,-1]]
+    return zip(*expire_list)[att]
+
+class EmployeeManager(object):
+    def __init__(self):
+        pass
+
 def get_user_list():
     center = Center.query.get(session['center'])
     return center.employees.filter_by(roster=1).all()
@@ -63,87 +80,93 @@ def get_user_info(uid):
     return user
 
 def store_user_info(form):
-    user = Employee.query.get(current_user.id)
+    if not hasattr(form, 'id'):
+        uid = current_user.id
+    else:
+        uid = form.id.data
+    user = Employee.query.get(uid)
     user.fullName = form.fullName.data
+    if hasattr(form, 'id'):
+        user.posId = form.position.data
     user.email = form.email.data
     if form.password.data:
         user.password = form.password.data
     db.session.commit()
     return user.id
 
-def get_rec_info(business, archived=0, document=False):
-    center = Center.query.get(session['center'])
-    if business == 'all':
-        return center.businesses.filter_by(archived=archived).all()
-    if document:
-        return Document.query.get_or_404(document)
-    record = center.businesses.filter_by(bizId=business).first_or_404()
-    documents = record.info.documents.with_entities(Document.typId).all()
-    if not documents: documents = [(-1,)]
-    return {'info': record.info, 'docs': documents}
-
-def get_stats():
-    return Business.query.with_entities(Business.id).all()
-
-def doc_expire(documents):
-    if documents == 'all':
-        documents = Document.query.all()
-    expire_list = {'exp_30': [], 'exp_60': []}
-    for doc in documents:
-        if (doc.expiry - timedelta(days=30)) <= datetime.today():
-            expire_list['exp_30'].append([doc.id, doc.typId])
-        if (doc.expiry - timedelta(days=60)) <= datetime.today():
-            expire_list['exp_60'].append([doc.id, doc.typId])
-    if not expire_list['exp_30']: expire_list['exp_30'] = [[-1,-1]]
-    if not expire_list['exp_60']: expire_list['exp_60'] = [[-1,-1]]
-    return expire_list
-
-def store_biz_info(form):
-    business = Business.query.get(form.id.data)
-    business.name = form.name.data
-    business.typId = form.type.data
-    business.contact = form.contact.data
-    business.phone = form.phone.data
+def add_new_user(form):
+    user = Employee(fullName=form.fullName.data, posId=form.position.data,
+                    email=form.email.data, password=form.password.data)
+    db.session.add(user)
     db.session.commit()
-    return business.id
-
-def store_doc_info(form):
-    document = Document.query.get(form.id.data)
-    document.expiry = form.expiry.data
+    assoc = CenterEmployee(cenId=session['center'], empId=user.id, accId=1)
+    db.session.add(assoc)
     db.session.commit()
-    return document.id
+    return user.id
 
-def add_new_record(form,type='biz'):
-    if type == 'biz':
-        new = Business(typId=form.type.data, name=form.name.data,
-                       contact=form.contact.data, phone=form.phone.data)
-        db.session.add(new)
-        db.session.commit()
-        assoc = CenterBusiness(cenId=session['center'], bizId=new.id)
-        db.session.add(assoc)
-        db.session.commit()
-        return new.id
-    elif type == 'doc':
-        new = Document(typId=form.type.data, bizId=form.bizId.data,
-                       expiry=form.expiry.data)
-        db.session.add(new)
-        db.session.commit()
-        return new.id
-    else:
-        abort(400)
+class RecordManager(object):
+    def __init__(self):
+        self.__center = Center.query.get(session['center'])
+        self.__business = None
+        self.__record = None
 
-def delete_record(record,type='biz'):
-    if type == 'biz':
-        center = Center.query.get(session['center'])
-        business = center.businesses.filter_by(bizId=record).first()
-        business.archived = 1
+    @property
+    def id(self):
+        return self.__record.id
+
+    def all(self, archived=0):
+        return self.__center.businesses.filter_by(archived=archived).all()
+
+    def get(self, biz, doc=None, obj=None):
+        self.__business = self.__center.businesses.filter_by(bizId=biz).first_or_404()
+        if not doc == None:
+            return self.__business.info.documents.filter_by(id=doc).first_or_404()
+        if obj: return self.__business
+        return self.__business.info
+
+    def list(self):
+        documents = self.__business.info.documents.with_entities(Document.typId).all()
+        if not documents:
+            documents = [[-1,-1]]
+        return zip(*documents)[0]
+
+    def store(self, form):
+        if hasattr(form, 'bizId'):
+            if form.id.data == 'new':
+                self.__record = Document(typId=form.type.data, bizId=form.bizId.data,
+                                         expiry=form.expiry.data)
+                db.session.add(self.__record)
+            else:
+                self.__record = self.get(form.bizId.data, form.id.data)
+                self.__record.expiry = form.expiry.data
+        else:
+            if form.id.data == 'new':
+                assoc = CenterBusiness()
+                assoc.info = Business(typId=form.type.data, name=form.name.data,
+                                      contact=form.contact.data, phone=form.phone.data)
+                self.__center.businesses.append(assoc)
+                db.session.add(self.__center)
+                self.__record = assoc.info
+            else:
+                self.__record = self.get(form.id.data)
+                self.__record.name = form.name.data
+                self.__record.typId = form.type.data
+                self.__record.contact = form.contact.data
+                self.__record.phone = form.phone.data
         db.session.commit()
-        flash('Record has been placed in the archive.', 'info')
-        return record
-    elif type == 'doc':
-        Document.query.filter_by(id=record).delete()
+        return self.__record.id
+
+    def archive(self, biz):
+        self.__record = self.get(biz, obj=True)
+        self.__record.archived = 1
         db.session.commit()
-        flash('Document has been removed from the record.', 'info')
-        return record
-    else:
-        abort(400)
+        return self.__record.bizId
+
+    def delete(self, biz, doc=None):
+        if not doc == None:
+            self.__record = self.get(biz, doc)
+            db.session.delete(self.__record)
+            db.session.commit()
+            return doc
+        self.__record = self.get(biz)
+        return biz

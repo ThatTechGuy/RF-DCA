@@ -14,7 +14,7 @@
         <div class="col-lg-12">
           <div class="panel panel-default">
             <div class="panel-heading">
-              Rostered Employee Users
+              Rostered Employees
               <button class="btn btn-primary btn-xs pull-right" data-toggle="modal" data-target="#addModal">
                 <i class="fa fa-plus fa-2x"></i>
               </button>
@@ -30,7 +30,7 @@
                       <th>Access</th>
                       <th>Moderator</th>
                       <th>Modify</th>
-                      <th>Delete</th>
+                      <th>Remove</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -43,13 +43,17 @@
                       <td>{{ user.access.level }}</td>
                       <td>{{ ternary[user.access.moderator] }}</td>
                       <td>
-                        <button class="btn btn-warning btn-xs" name="editUser" data-id="{{ user.data.id }}">
-                          <i class="fa fa-pencil fa-large"></i>
+                        <button class="btn btn-warning btn-xs" name="editInfo" data-id="{{ user.data.id }}">
+                          <i class="fa fa-info fa-large"></i>
+                        </button>
+                        &nbsp;|&nbsp;
+                        <button class="btn btn-warning btn-xs" name="editPerm" data-id="{{ user.data.id }}">
+                          <i class="fa fa-key fa-large"></i>
                         </button>
                       </td>
                       <td>
-                        <button class="btn btn-danger btn-xs"  name="deleteUser" data-id="{{ user.data.id }}">
-                          <i class="fa fa-trash fa-large centered"></i>
+                        <button class="btn btn-danger btn-xs"  name="removeUser" data-id="{{ user.data.id }}">
+                          <i class="fa fa-ban fa-large centered"></i>
                         </button>
                       </td>
                     </tr>
@@ -66,49 +70,18 @@
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-              <h4 class="modal-title" id="addModalLabel">New Employee User</h4>
+              <h4 class="modal-title" id="addModalLabel">New Employee Info</h4>
             </div>
             <div class="modal-body">
               <form id="addUserForm" class="form-horizontal" method="POST">
-                {{ form_new.form(value='add') }}
+                {{ form.id(value='new') }}
                 <fieldset>
-                  <legend>Personal Information</legend>
-                  {{ render_field(form_new.fullName, form_new.fullName.label, autofocus='autofocus') }}
-                  {{ render_field(form_new.position, form_new.position.label) }}
-                </fieldset>
-                <fieldset>
-                  <legend>Account Details</legend>
-                  {{ render_field(form_new.email, form_new.email.label) }}
-                  {{ render_field(form_new.password, form_new.password.label) }}
-                  {{ render_field(form_new.confirm, form_new.confirm.label) }}
-                </fieldset>
-                {{ form_new.csrf_token }}
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              <button type="submit" form="addUserForm" class="btn btn-primary">Create User</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-              <h4 class="modal-title" id="editModalLabel">Modify Employee User</h4>
-            </div>
-            <div class="modal-body">
-              <form id="editUserForm" class="form-horizontal" method="POST">
-                {{ form.id(value='') }}
-                <fieldset>
-                  <legend>Personal Information</legend>
+                  <legend>Personal</legend>
                   {{ render_field(form.fullName, form.fullName.label, autofocus='autofocus') }}
                   {{ render_field(form.position, form.position.label) }}
                 </fieldset>
                 <fieldset>
-                  <legend>Account Details</legend>
+                  <legend>Account</legend>
                   {{ render_field(form.email, form.email.label) }}
                   {{ render_field(form.password, form.password.label) }}
                   {{ render_field(form.confirm, form.confirm.label) }}
@@ -118,7 +91,38 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              <button type="submit" form="editUserForm" class="btn btn-primary">Save changes</button>
+              <button type="submit" form="addUserForm" class="btn btn-primary">Create User</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="editInfoModal" tabindex="-1" role="dialog" aria-labelledby="editInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="editModalInfoLabel">Modify Employee Info</h4>
+            </div>
+            <div class="modal-body">
+              <form id="editUserInfoForm" class="form-horizontal" method="POST">
+                {{ form.id(value='') }}
+                <fieldset>
+                  <legend>Personal</legend>
+                  {{ render_field(form.fullName, form.fullName.label, autofocus='autofocus') }}
+                  {{ render_field(form.position, form.position.label) }}
+                </fieldset>
+                <fieldset>
+                  <legend>Account</legend>
+                  {{ render_field(form.email, form.email.label) }}
+                  {{ render_field(form.password, form.password.label) }}
+                  {{ render_field(form.confirm, form.confirm.label) }}
+                </fieldset>
+                {{ form.csrf_token }}
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="submit" form="editUserInfoForm" class="btn btn-primary">Save changes</button>
             </div>
           </div>
         </div>
@@ -141,19 +145,19 @@
         }]
       });
 
-      $('button[name="editUser"]').on('click', function(){
+      $('button[name="editInfo"]').on('click', function(){
         $.ajax({
-          url: '{{ url_for('get_record', type='user') }}',
+          url: '{{ url_for('get_data', type='usr') }}',
           data: {
-            id: $(this).attr('data-id')
+            usrId: $(this).attr('data-id')
           },
           type: 'POST',
           success: function(data) {
-            $('#editUserForm #id').val(data.id);
-            $('#editUserForm #fullName').val(data.fullName);
-            $('#editUserForm #position').val(data.position);
-            $('#editUserForm #email').val(data.email);
-            $('#editModal').modal();
+            $('#editUserInfoForm #id').val(data.id);
+            $('#editUserInfoForm #fullName').val(data.fullName);
+            $('#editUserInfoForm #position').val(data.position);
+            $('#editUserInfoForm #email').val(data.email);
+            $('#editInfoModal').modal();
           },
           error: function(error) {
             console.log(error);
@@ -161,12 +165,12 @@
         });
       });
 
-      $('button[name="deleteUser"]').on('click', function(){
+      $('button[name="removeUser"]').on('click', function(){
         $.ajax({
-          url: '{{ url_for('get_record', type='user') }}',
+          url: '{{ url_for('get_data', type='usr') }}',
           data: {
             id: $(this).attr('data-id'),
-            action: 'delete'
+            action: 'remove'
           },
           type: 'POST',
           success: function() {

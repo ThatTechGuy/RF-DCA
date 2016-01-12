@@ -18,9 +18,9 @@
             </div>
             <div class="panel-body">
               <h3>
-                {{ data.record.info.name }}
+                {{ data.record.name }}
                 <span class="label label-primary pull-right">
-                  {{ data.record.info.type.name }}
+                  {{ data.record.type.name }}
                 </span>
               </h3>
               <table class="table">
@@ -33,8 +33,8 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td>{{ data.record.info.contact }}</td>
-                    <td>{{ data.record.info.phone }}</td>
+                    <td>{{ data.record.contact }}</td>
+                    <td>{{ data.record.phone }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -43,10 +43,10 @@
                   Document Requirements
                 </div>
                 <ul class="list-group">
-                {% for req in data.record.info.type.requirements %}
+                {% for req in data.record.type.requirements %}
                   {% if req.docType in data.expire.exp_60 %}
                   <li class="list-group-item list-group-item-warning">{{ req.type.name }}</li>
-                  {% elif req.docType in data.record.docs %}
+                  {% elif req.docType in data.doc_list %}
                   <li class="list-group-item list-group-item-success">{{ req.type.name }}</li>
                   {% else %}
                   <li class="list-group-item list-group-item-danger">{{ req.type.name }}</li>
@@ -81,7 +81,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    {% for doc in data.record.info.documents %}
+                    {% for doc in data.record.documents %}
                     <tr>
                       <td>{{ doc.type.name }}</td>
                       <td>{{ doc.expiry.strftime('%m/%d/%Y') }}</td>
@@ -118,13 +118,14 @@
             </div>
             <div class="modal-body">
               <form id="addDocForm" class="form-horizontal" method="POST">
-                {{ form_new.bizId(value=data.record.info.id) }}
+                {{ form.id(value='new') }}
+                {{ form.bizId(value=data.record.id) }}
                 <fieldset>
                   <legend>Document Information</legend>
-                  {{ render_field(form_new.type, form_new.type.label, autofocus='autofocus') }}
-                  {{ render_field(form_new.expiry, form_new.expiry.label) }}
+                  {{ render_field(form.type, form.type.label, autofocus='autofocus') }}
+                  {{ render_field(form.expiry, form.expiry.label) }}
                 </fieldset>
-                {{ form_new.csrf_token }}
+                {{ form.csrf_token }}
               </form>
             </div>
             <div class="modal-footer">
@@ -146,6 +147,7 @@
             <div class="modal-body">
               <form id="editDocForm" class="form-horizontal" method="POST">
                 {{ form.id(value='') }}
+                {{ form.bizId(value=data.record.id) }}
                 <fieldset>
                   <legend>Document Information</legend>
                   {{ render_field(form.type, form.type.label, disabled='disabled') }}
@@ -191,9 +193,10 @@
       {% if data.perms.access.modDoc %}
       $('button[name="editDoc"]').on('click', function(){
         $.ajax({
-          url: '{{ url_for('get_record', type='doc') }}',
+          url: '{{ url_for('get_data', type='doc') }}',
           data: {
-            id: $(this).attr('data-id')
+            docId: $(this).attr('data-id'),
+            bizId: {{ data.record.id }}
           },
           type: 'POST',
           success: function(data) {
@@ -212,9 +215,10 @@
       {% if data.perms.access.delDoc %}
       $('button[name="deleteDoc"]').on('click', function(){
         $.ajax({
-          url: '{{ url_for('get_record', type='doc') }}',
+          url: '{{ url_for('get_data', type='doc') }}',
           data: {
-            id: $(this).attr('data-id'),
+            docId: $(this).attr('data-id'),
+            bizId: {{ data.record.id }},
             action: 'delete'
           },
           type: 'POST',
