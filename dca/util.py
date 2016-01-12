@@ -106,26 +106,25 @@ def add_new_user(form):
 
 class RecordManager(object):
     def __init__(self):
-        self.__center = Center.query.get(session['center'])
-        self.__business = None
-        self.__record = None
+        self._center = Center.query.get(session['center'])
+        self._business = None
+        self._document = None
 
     @property
-    def id(self):
-        return self.__record.id
+    def doc_id(self):
+        return None if self._document is None else self._document.id
 
     def all(self, archived=0):
-        return self.__center.businesses.filter_by(archived=archived).all()
+        return self._center.all_biz(archived)
 
-    def get(self, biz, doc=None, obj=None):
-        self.__business = self.__center.businesses.filter_by(bizId=biz).first_or_404()
-        if not doc == None:
-            return self.__business.info.documents.filter_by(id=doc).first_or_404()
-        if obj: return self.__business
-        return self.__business.info
+    def get(self, biz, doc=None, obj=False):
+        self._business = self._center.biz_by_id(biz)
+        if doc is not None:
+            return self._business.doc_by_id(doc)
+        return self._business.details
 
     def list(self):
-        documents = self.__business.info.documents.with_entities(Document.typId).all()
+        documents = self._business.doc_type_list()
         if not documents:
             documents = [[-1,-1]]
         return zip(*documents)[0]
@@ -133,40 +132,40 @@ class RecordManager(object):
     def store(self, form):
         if hasattr(form, 'bizId'):
             if form.id.data == 'new':
-                self.__record = Document(typId=form.type.data, bizId=form.bizId.data,
+                self._record = Document(typId=form.type.data, bizId=form.bizId.data,
                                          expiry=form.expiry.data)
-                db.session.add(self.__record)
+                db.session.add(self._record)
             else:
-                self.__record = self.get(form.bizId.data, form.id.data)
-                self.__record.expiry = form.expiry.data
+                self._record = self.get(form.bizId.data, form.id.data)
+                self._record.expiry = form.expiry.data
         else:
             if form.id.data == 'new':
                 assoc = CenterBusiness()
-                assoc.info = Business(typId=form.type.data, name=form.name.data,
+                assoc.details = Business(typId=form.type.data, name=form.name.data,
                                       contact=form.contact.data, phone=form.phone.data)
-                self.__center.businesses.append(assoc)
-                db.session.add(self.__center)
-                self.__record = assoc.info
+                self._center.businesses.append(assoc)
+                db.session.add(self._center)
+                self._record = assoc.details
             else:
-                self.__record = self.get(form.id.data)
-                self.__record.name = form.name.data
-                self.__record.typId = form.type.data
-                self.__record.contact = form.contact.data
-                self.__record.phone = form.phone.data
+                self._record = self.get(form.id.data)
+                self._record.name = form.name.data
+                self._record.typId = form.type.data
+                self._record.contact = form.contact.data
+                self._record.phone = form.phone.data
         db.session.commit()
-        return self.__record.id
+        return self._record.id
 
     def archive(self, biz):
-        self.__record = self.get(biz, obj=True)
-        self.__record.archived = 1
+        self._record = self.get(biz, obj=True)
+        self._record.archived = 1
         db.session.commit()
-        return self.__record.bizId
+        return self._record.bizId
 
     def delete(self, biz, doc=None):
         if not doc == None:
-            self.__record = self.get(biz, doc)
-            db.session.delete(self.__record)
+            self._record = self.get(biz, doc)
+            db.session.delete(self._record)
             db.session.commit()
             return doc
-        self.__record = self.get(biz)
+        self._record = self.get(biz)
         return biz

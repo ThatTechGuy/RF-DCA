@@ -40,25 +40,25 @@
                   <tbody>
                     {% for biz in data.biz_list %}
                     <tr>
-                      <td>{{ biz.info.type.name }}</td>
-                      <td>{{ biz.info.name }}</td>
-                      <td>{{ biz.info.contact }}</td>
-                      <td>{{ biz.info.phone }}</td>
+                      <td>{{ biz.details.type.name }}</td>
+                      <td>{{ biz.details.name }}</td>
+                      <td>{{ biz.details.contact }}</td>
+                      <td>{{ biz.details.phone }}</td>
                       <td>
-                        <a class="btn btn-info btn-xs" href="{{ url_for('doc_manage', record=biz.info.id) }}" role="button">
+                        <a class="btn btn-info btn-xs" href="{{ url_for('doc_manage', record=biz.details.id) }}" role="button">
                           <i class="fa fa-eye fa-large"></i>
                         </a>
                       </td>
                       {% if data.perms.access.modBiz %}
                       <td>
-                        <button class="btn btn-warning btn-xs" name="editBiz" data-id="{{ biz.info.id }}">
+                        <button class="btn btn-warning btn-xs" name="editBiz" data-id="{{ biz.details.id }}">
                           <i class="fa fa-pencil fa-large"></i>
                         </button>
                       </td>
                       {% endif %}
                       {% if data.perms.access.delBiz %}
                       <td>
-                        <button class="btn btn-danger btn-xs"  name="deleteBiz" data-id="{{ biz.info.id }}">
+                        <button class="btn btn-danger btn-xs"  name="deleteBiz" data-id="{{ biz.details.id }}">
                           <i class="fa fa-archive fa-large centered"></i>
                         </button>
                       </td>

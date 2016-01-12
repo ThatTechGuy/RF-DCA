@@ -70,7 +70,7 @@ def biz_manage():
     form.type.choices = [(c.id, c.name) for c in BizType.query.order_by('id')]
     if form.validate_on_submit() and records.store(form):
         if form.id.data == 'new':
-            return redirect(url_for('doc_manage', record=records.id))
+            return redirect(url_for('doc_manage', record=records.doc_id))
         flash('Record has been successfully updated.', 'info')
         return redirect(url_for('biz_manage'))
     data['biz_list'] = records.all()

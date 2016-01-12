@@ -12,6 +12,12 @@ class Center(db.Model):
     businesses = db.relationship('CenterBusiness', lazy='dynamic')
     employees = db.relationship('CenterEmployee', lazy='dynamic')
 
+    def all_biz(self, archived):
+        return self.businesses.filter_by(archived=archived).all()
+
+    def biz_by_id(self, biz):
+        return self.businesses.filter_by(bizId=biz).first_or_404()
+
 class Employee(db.Model,UserMixin):
     id = db.Column(MEDIUMINT(8, unsigned=True), primary_key=True,
                    autoincrement=True)
@@ -130,10 +136,16 @@ class CenterBusiness(db.Model):
                                     onupdate='RESTRICT',
                                     ondelete='RESTRICT'),
                       primary_key=True)
-    info = db.relationship('Business', backref='centers',
-                           lazy='joined')
+    details = db.relationship('Business', backref='centers',
+                              lazy='joined')
     archived = db.Column(TINYINT(1, unsigned=True), nullable=False,
                          server_default='0')
+
+    def doc_by_id(self, doc):
+        return self.details.documents.filter_by(id=doc).first_or_404()
+
+    def doc_type_list(self):
+        return self.details.documents.with_entities(Document.typId).all()
 
 class Document(db.Model):
     id = db.Column(MEDIUMINT(8, unsigned=True), primary_key=True,
