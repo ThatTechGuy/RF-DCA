@@ -21,7 +21,7 @@ def mod_perm_req(func):
     @wraps(func)
     def decorated_function(*args, **kwargs):
         perms = current_user.user_perms_for(session['center'])
-        if not perms or not perms.access.moderator:
+        if not perms or not perms.moderator:
             flash('You Do Not Have Permission to Access This Page!', 'error')
             return redirect(url_for('dashboard'))
         return func(*args, **kwargs)
@@ -108,19 +108,23 @@ class RecordManager(object):
     def __init__(self):
         self._center = Center.query.get(session['center'])
         self._business = None
-        self._document = None
+        self._record = None
 
     @property
     def doc_id(self):
-        return None if self._document is None else self._document.id
+        return None if self._record is None else self._record.id
 
-    def all(self, archived=0):
-        return self._center.all_biz(archived)
+    def all(self, archived=0, excluded=False):
+        if not excluded:
+            return self._center.all_biz(archived)
+        return self._center.all_excluded()
 
     def get(self, biz, doc=None, obj=False):
         self._business = self._center.biz_by_id(biz)
         if doc is not None:
             return self._business.doc_by_id(doc)
+        if obj:
+            return self._business
         return self._business.details
 
     def list(self):
@@ -132,8 +136,9 @@ class RecordManager(object):
     def store(self, form):
         if hasattr(form, 'bizId'):
             if form.id.data == 'new':
-                self._record = Document(typId=form.type.data, bizId=form.bizId.data,
-                                         expiry=form.expiry.data)
+                self._record = Document(
+                    typId=form.type.data, bizId=form.bizId.data,
+                    expiry=form.expiry.data)
                 db.session.add(self._record)
             else:
                 self._record = self.get(form.bizId.data, form.id.data)
@@ -141,8 +146,9 @@ class RecordManager(object):
         else:
             if form.id.data == 'new':
                 assoc = CenterBusiness()
-                assoc.details = Business(typId=form.type.data, name=form.name.data,
-                                      contact=form.contact.data, phone=form.phone.data)
+                assoc.details = Business(
+                    typId=form.type.data, name=form.name.data,
+                    contact=form.contact.data, phone=form.phone.data)
                 self._center.businesses.append(assoc)
                 db.session.add(self._center)
                 self._record = assoc.details
@@ -154,6 +160,20 @@ class RecordManager(object):
                 self._record.phone = form.phone.data
         db.session.commit()
         return self._record.id
+
+    def import_(self, bizs):
+        for biz in bizs:
+            self._record = self._center.arc_by_id(biz)
+            self._business = Business.query.get(biz)
+            if self._record is not None:
+                self._record.archived = 0
+            else:
+                assoc = CenterBusiness()
+                assoc.details = self._business
+                self._center.businesses.append(assoc)
+                db.session.add(self._center)
+        db.session.commit()
+        return bizs
 
     def archive(self, biz):
         self._record = self.get(biz, obj=True)

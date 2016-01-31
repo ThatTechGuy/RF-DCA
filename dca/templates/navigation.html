@@ -39,8 +39,10 @@
             {% else %}
             <li><a href="{{ url_for('center', center=data.center) }}"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a></li>
             {% endif %}
+            {% if session['center'] != None or current_user.admin %}
             <li><a href="{{ url_for('biz_manage') }}"><i class="fa fa-folder fa-fw"></i> Manager</a></li>
-            {% if data.perms.access and data.perms.access.moderator %}
+            {% endif %}
+            {% if data.perms.moderator or current_user.admin %}
             <li><a href="{{ url_for('user_admin') }}"><i class="fa fa-users fa-fw"></i> Users</a></li>
             {% endif %}
             {% if current_user.admin %}

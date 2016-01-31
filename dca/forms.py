@@ -24,6 +24,7 @@ class UserPermForm(Form):
     id = HiddenField('Employee ID', validators=[Required()])
     access = SelectField('Access Level', coerce=int,
                          validators=[Required()])
+    moderator = BooleanField('')
     roster = BooleanField('')
 
 class BusinessForm(Form):

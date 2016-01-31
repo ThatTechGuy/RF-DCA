@@ -15,9 +15,16 @@
           <div class="panel panel-default">
             <div class="panel-heading">
               Active Businesses
-              <button class="btn btn-primary btn-xs pull-right" data-toggle="modal" data-target="#addModal">
+              {% if data.perms.access.impBiz %}
+              <button id="impBtn" class="btn btn-primary btn-xs pull-right" style="margin-left:5px;" data-toggle="modal" data-target="#impModal">
+                <i class="fa fa-download fa-2x"></i>
+              </button>
+              {% endif %}
+              {% if data.perms.access.addBiz %}
+              <button id="addBtn" class="btn btn-primary btn-xs pull-right" data-toggle="modal" data-target="#addModal">
                 <i class="fa fa-plus fa-2x"></i>
               </button>
+              {% endif %}
             </div>
             <div class="panel-body">
               <div class="dataTable_wrapper">
@@ -32,7 +39,7 @@
                       {% if data.perms.access.modBiz %}
                       <th>Modify</th>
                       {% endif %}
-                      {% if data.perms.access.delBiz %}
+                      {% if data.perms.access.arcBiz %}
                       <th>Archive</th>
                       {% endif %}
                     </tr>
@@ -56,9 +63,9 @@
                         </button>
                       </td>
                       {% endif %}
-                      {% if data.perms.access.delBiz %}
+                      {% if data.perms.access.arcBiz %}
                       <td>
-                        <button class="btn btn-danger btn-xs"  name="deleteBiz" data-id="{{ biz.details.id }}">
+                        <button class="btn btn-danger btn-xs"  name="archiveBiz" data-id="{{ biz.details.id }}">
                           <i class="fa fa-archive fa-large centered"></i>
                         </button>
                       </td>
@@ -72,6 +79,48 @@
           </div>
         </div>
       </div>
+      {% if data.perms.access.impBiz %}
+      <div class="modal fade" id="impModal" tabindex="-1" role="dialog" aria-labelledby="impModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="impModalLabel">Import Business Record</h4>
+            </div>
+            <div class="modal-body">
+              <div class="dataTable_wrapper">
+                <table class="table table-striped table-bordered table-hover" id="biz-import">
+                  <thead>
+                    <tr>
+                      <th>Business</th>
+                      <th>Contact</th>
+                      <th>Phone</th>
+                      <th>Import</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for imp in data.imp_list %}
+                    <tr>
+                      <td>{{ imp.name|truncate(25, True) }}</td>
+                      <td>{{ imp.contact }}</td>
+                      <td>{{ imp.phone }}</td>
+                      <td>
+                        <input type="checkbox" name="arcId" value="{{ imp.id }}" />
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="button" id="impFormBtn" class="btn btn-primary">Import Record</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
       {% if data.perms.access.addBiz %}
       <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -147,9 +196,9 @@
       $('#biz-index').DataTable({
         "responsive": true,
         "columnDefs": [{
-          {% if data.perms.access.modBiz and data.perms.access.delBiz %}
+          {% if data.perms.access.modBiz and data.perms.access.arcBiz %}
           "targets": [-1,-2,-3],
-          {% elif data.perms.access.modBiz or data.perms.access.delBiz %}
+          {% elif data.perms.access.modBiz or data.perms.access.arcBiz %}
           "targets": [-1,-2],
           {% else %}
           "targets": [-1],
@@ -160,6 +209,48 @@
         }]
       });
 
+      $('#biz-import').DataTable({
+        "responsive": true,
+        "bAutoWidth": false,
+        "bSort": false,
+        "bLengthChange": false,
+        "pageLength": 5,
+        "columnDefs": [{
+          "targets": [-1],
+          "searchable": false,
+          "className": "text-center"
+        }],
+        "columns": [
+          {"width": "35%"},
+          {"width": "35%"},
+          {"width": "20%"},
+          {"width": "10%"},
+        ]
+      });
+
+      {% if data.perms.access.impBiz %}
+      $('#impFormBtn').on('click', function(){
+        var biz_array = []
+        $('#biz-import').find('input[type="checkbox"]:checked').each(function () {
+          biz_array.push($(this).val());
+        });
+        $.ajax({
+          url: '{{ url_for('get_data', type='biz') }}',
+          data: {
+            bizIds: JSON.stringify(biz_array),
+            action: 'import'
+          },
+          type: 'POST',
+          success: function(data) {
+            window.location.reload(true);
+          },
+          error: function(error) {
+            console.log(error);
+          }
+        });
+      });
+      {% endif %}
+
       {% if data.perms.access.modBiz %}
       $('button[name="editBiz"]').on('click', function(){
         $.ajax({
@@ -169,6 +260,8 @@
           },
           type: 'POST',
           success: function(data) {
+            $('span.help-block').remove()
+            $('div.form-group').removeClass('has-error')
             $('#editBizForm #id').val(data.id);
             $('#editBizForm #name').val(data.name);
             $('#editBizForm #type').val(data.type);
@@ -183,8 +276,8 @@
       });
       {% endif %}
 
-      {% if data.perms.access.delBiz %}
-      $('button[name="deleteBiz"]').on('click', function(){
+      {% if data.perms.access.arcBiz %}
+      $('button[name="archiveBiz"]').on('click', function(){
         $.ajax({
           url: '{{ url_for('get_data', type='biz') }}',
           data: {
@@ -206,6 +299,13 @@
       if (!error){
         $('#editModal').modal('show');
       }
+
+      $('#addBtn').on('click', function(){
+          $('form').find('input:text').val('');
+          $('form').find('select').val('0');
+          $('span.help-block').remove()
+          $('div.form-group').removeClass('has-error')
+      });
 
     });
   </script>

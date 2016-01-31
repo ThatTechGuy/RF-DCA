@@ -1,5 +1,5 @@
-from flask import abort, flash, jsonify, render_template, redirect, request, \
-    url_for, session
+from flask import abort, flash, json, jsonify, render_template, redirect, \
+    request, url_for, session
 from flask.ext.login import current_user, login_required, login_user, logout_user
 
 from . import app
@@ -74,6 +74,7 @@ def biz_manage():
         flash('Record has been successfully updated.', 'info')
         return redirect(url_for('biz_manage'))
     data['biz_list'] = records.all()
+    data['imp_list'] = records.all(excluded=True)
     return render_template('manager.html', data=data, form=form)
 
 @app.route('/manager/record/<record>', methods=["GET", "POST"])
@@ -99,7 +100,7 @@ def user_admin():
     data = get_user_data()
     form = UserInfoForm()
     form.position.choices = [(c.id, c.title) for c in EmpPosition.query.order_by('id')]
-    if form.validate_on_submit() and data['perms'].access.moderator:
+    if form.validate_on_submit() and data['perms'].moderator:
         if store_user_info(form):
             flash('User has been successfully updated.', 'info')
             return redirect(url_for('user_admin'))
@@ -119,36 +120,51 @@ def global_settings():
 @center_required
 def get_data(type):
     records = RecordManager()
+    data = get_user_data()
     if type == 'biz':
-        if 'action' in request.form and request.form['action'] == 'archive':
-            result = records.archive(request.form['bizId'])
-            flash('Record has been archived successfully.', 'info')
-            return jsonify({'id': result})
-        bizId = request.form['bizId']
-        biz = records.get(bizId)
-        business = {
-            'id': biz.id,
-            'type': biz.type.id,
-            'name': biz.name,
-            'contact': biz.contact,
-            'phone': biz.phone
-        }
-        return jsonify(business)
+        if 'action' in request.form and request.form['action'] == 'import':
+            if data['perms'].access.impBiz:
+                result = records.import_(json.loads(request.form['bizIds']))
+                flash('Record(s) have been imported successfully.', 'info')
+                return jsonify({'ids': result})
+            abort(403)
+        elif 'action' in request.form and request.form['action'] == 'archive':
+            if data['perms'].access.arcBiz:
+                result = records.archive(request.form['bizId'])
+                flash('Record has been archived successfully.', 'info')
+                return jsonify({'id': result})
+            abort(403)
+        if data['perms'].access.modBiz:
+            bizId = request.form['bizId']
+            biz = records.get(bizId)
+            business = {
+                'id': biz.id,
+                'type': biz.type.id,
+                'name': biz.name,
+                'contact': biz.contact,
+                'phone': biz.phone
+            }
+            return jsonify(business)
+        abort(403)
     elif type == 'doc':
         if 'action' in request.form and request.form['action'] == 'delete':
-            result = records.delete(request.form['bizId'], request.form['docId'])
-            flash('Document has been deleted successfully.', 'info')
-            return jsonify({'id': result})
-        docId = request.form['docId']
-        bizId = request.form['bizId']
-        doc = records.get(bizId, docId)
-        document = {
-            'id': doc.id,
-            'type': doc.type.id,
-            'expiry': doc.expiry.strftime('%m/%d/%Y'),
-        }
-        return jsonify(document)
-    elif type == 'usr':
+            if data['perms'].access.delDoc:
+                result = records.delete(request.form['bizId'], request.form['docId'])
+                flash('Document has been deleted successfully.', 'info')
+                return jsonify({'id': result})
+            abort(403)
+        if data['perms'].access.modDoc:
+            docId = request.form['docId']
+            bizId = request.form['bizId']
+            doc = records.get(bizId, docId)
+            document = {
+                'id': doc.id,
+                'type': doc.type.id,
+                'expiry': doc.expiry.strftime('%m/%d/%Y'),
+            }
+            return jsonify(document)
+        abort(403)
+    elif type == 'usr' and data['perms'].moderator:
         if 'action' in request.form and request.form['action'] == 'remove':
             result = delete_record(request.form['usrId'], 'user')
             return jsonify({'id': result})
@@ -161,5 +177,7 @@ def get_data(type):
             'email': usr.email
         }
         return jsonify(user)
+    elif type == 'usr':
+        abort(403)
     else:
         abort(400)

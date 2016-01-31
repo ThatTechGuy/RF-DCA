@@ -41,7 +41,7 @@
                       <td>{{ user.data.fullName }}</td>
                       <td>{{ user.data.email }}</td>
                       <td>{{ user.access.level }}</td>
-                      <td>{{ ternary[user.access.moderator] }}</td>
+                      <td>{{ ternary[user.moderator] }}</td>
                       <td>
                         <button class="btn btn-warning btn-xs" name="editInfo" data-id="{{ user.data.id }}">
                           <i class="fa fa-info fa-large"></i>

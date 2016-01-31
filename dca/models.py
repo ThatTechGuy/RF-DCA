@@ -1,4 +1,5 @@
 from sqlalchemy.dialects.mysql import MEDIUMINT, TINYINT, VARCHAR
+from sqlalchemy.sql.expression import and_, or_
 from sqlalchemy.ext.hybrid import hybrid_property
 from flask.ext.login import UserMixin
 
@@ -15,8 +16,16 @@ class Center(db.Model):
     def all_biz(self, archived):
         return self.businesses.filter_by(archived=archived).all()
 
+    def all_excluded(self):
+        return db.engine.execute("SELECT * FROM (SELECT * FROM center_business WHERE cenId = %s) cb RIGHT OUTER JOIN business b ON bizId = id WHERE cb.archived = 1 or cb.archived is NULL" % self.id)
+
     def biz_by_id(self, biz):
-        return self.businesses.filter_by(bizId=biz).first_or_404()
+        return self.businesses.filter(and_(
+            CenterBusiness.bizId==biz,
+            CenterBusiness.archived==0)).first_or_404()
+
+    def arc_by_id(self, biz):
+        return self.businesses.filter_by(bizId=biz).first()
 
 class Employee(db.Model,UserMixin):
     id = db.Column(MEDIUMINT(8, unsigned=True), primary_key=True,
@@ -80,6 +89,8 @@ class CenterEmployee(db.Model):
                       nullable=False)
     access = db.relationship('CeAccess', backref='center_employees',
                              lazy='subquery')
+    moderator = db.Column(TINYINT(1, unsigned=True), nullable=False,
+                       server_default='0')
     roster = db.Column(TINYINT(1, unsigned=True), nullable=False,
                        server_default='1')
 
@@ -99,7 +110,9 @@ class CeAccess(db.Model):
                        server_default='0')
     delBiz = db.Column(TINYINT(1, unsigned=True), nullable=False,
                        server_default='0')
-    moderator = db.Column(TINYINT(1, unsigned=True), nullable=False,
+    impBiz = db.Column(TINYINT(1, unsigned=True), nullable=False,
+                       server_default='0')
+    arcBiz = db.Column(TINYINT(1, unsigned=True), nullable=False,
                        server_default='0')
 
 class Business(db.Model):
